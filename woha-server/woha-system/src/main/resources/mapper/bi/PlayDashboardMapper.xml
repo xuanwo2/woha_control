@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.woha.business.bi.mapper.PlayDashboardMapper">
+
+    <sql id="userCountryCondition">
+        AND u.region_id = #{query.regionId}
+        <if test="query.country != null and query.country != ''">
+            AND u.country = #{query.country}
+        </if>
+    </sql>
+
+    <!-- 自研玩法直接使用玩法结果表，第三方玩法使用 game_record 独立对账表。 -->
+    <select id="selectGameOverview" resultType="java.util.Map">
+        SELECT overview.gameCode,
+               overview.betGold,
+               overview.rewardGold,
+               overview.participants
+        FROM (
+            SELECT 'luck' AS gameCode,
+                   IFNULL(SUM(r.total_input), 0) AS betGold,
+                   IFNULL(SUM(r.total_output), 0) AS rewardGold,
+                   COUNT(DISTINCT r.uid) AS participants
+            FROM play_luck_record r
+            JOIN `user` u ON u.uid = r.uid AND u.region_id = r.region_id
+            WHERE r.create_time BETWEEN #{startTime} AND #{endTime}
+            <include refid="userCountryCondition" />
+            UNION ALL
+            SELECT 'wheel', IFNULL(SUM(r.gold_num), 0), IFNULL(SUM(r.reward_num), 0), COUNT(DISTINCT r.uid)
+            FROM play_wheel_record r
+            JOIN `user` u ON u.uid = r.uid
+            WHERE r.create_time BETWEEN #{startTime} AND #{endTime}
+            <include refid="userCountryCondition" />
+            UNION ALL
+            SELECT 'zool', IFNULL(SUM(r.gold_num), 0), IFNULL(SUM(r.reward_num), 0), COUNT(DISTINCT r.uid)
+            FROM play_zool_record r
+            JOIN `user` u ON u.uid = r.uid
+            WHERE r.create_time BETWEEN #{startTime} AND #{endTime}
+            <include refid="userCountryCondition" />
+            UNION ALL
+            SELECT 'tarot', IFNULL(SUM(r.gold_num), 0), IFNULL(SUM(r.reward_num), 0), COUNT(DISTINCT r.uid)
+            FROM play_tarot_record r
+            JOIN `user` u ON u.uid = r.uid
+            WHERE r.create_time BETWEEN #{startTime} AND #{endTime}
+            <include refid="userCountryCondition" />
+            UNION ALL
+            SELECT 'third',
+                   IFNULL(SUM(CASE WHEN r.type = 1 THEN r.gold_num ELSE 0 END), 0),
+                   IFNULL(SUM(CASE WHEN r.type = 2 THEN r.gold_num ELSE 0 END), 0),
+                   COUNT(DISTINCT r.uid)
+            FROM game_record r
+            JOIN `user` u ON u.uid = r.uid AND u.region_id = r.region_id
+            WHERE r.create_time BETWEEN #{startTime} AND #{endTime}
+            <include refid="userCountryCondition" />
+        ) overview
+        ORDER BY FIELD(overview.gameCode, 'luck', 'wheel', 'zool', 'tarot', 'third')
+    </select>
+
+    <!-- open_type 固定值：0 为概率口径、1 为公共奖池、2 为个人奖池。 -->
+    <select id="selectLuckSegments" resultType="java.util.Map">
+        SELECT segment.segmentCode,
+               SUM(segment.plays) AS plays,
+               SUM(segment.inputGold) AS inputGold,
+               SUM(segment.outputGold) AS outputGold
+        FROM (
+            SELECT CASE r.open_type
+                       WHEN 0 THEN 'probability'
+                       WHEN 1 THEN 'publicPool'
+                       WHEN 2 THEN 'personalPool'
+                   END AS segmentCode,
+                   IFNULL(SUM(r.times), 0) AS plays,
+                   IFNULL(SUM(r.total_input), 0) AS inputGold,
+                   IFNULL(SUM(r.total_output), 0) AS outputGold
+            FROM play_luck_record r
+            JOIN `user` u ON u.uid = r.uid AND u.region_id = r.region_id
+            WHERE r.open_type IN (0, 1, 2)
+              AND r.create_time BETWEEN #{startTime} AND #{endTime}
+            <include refid="userCountryCondition" />
+            GROUP BY r.open_type
+            UNION ALL
+            SELECT CASE f.type WHEN 1 THEN 'fixedManual' WHEN 2 THEN 'fixedAuto' END,
+                   COUNT(0), IFNULL(SUM(f.input), 0), IFNULL(SUM(f.output), 0)
+            FROM play_luck_fixed_input f
+            JOIN `user` u ON u.uid = f.uid AND u.region_id = f.region_id
+            WHERE f.type IN (1, 2)
+              AND f.input IS NOT NULL
+              AND f.output IS NOT NULL
+              AND f.create_time BETWEEN #{startTime} AND #{endTime}
+            <include refid="userCountryCondition" />
+            GROUP BY f.type
+        ) segment
+        WHERE segment.segmentCode IS NOT NULL
+        GROUP BY segment.segmentCode
+        ORDER BY FIELD(segment.segmentCode, 'probability', 'publicPool', 'personalPool', 'fixedManual', 'fixedAuto')
+    </select>
+
+    <select id="selectLuckFunnel" resultType="java.util.Map">
+        SELECT
+            (SELECT COUNT(DISTINCT r.uid)
+             FROM play_luck_record r
+             JOIN `user` u ON u.uid = r.uid AND u.region_id = r.region_id
+             WHERE r.create_time BETWEEN #{startTime} AND #{endTime}
+             <include refid="userCountryCondition" />) AS betUsers,
+            (SELECT COUNT(DISTINCT repeat_user.uid)
+             FROM (
+                 SELECT r.uid, DATE(r.create_time) AS play_date
+                 FROM play_luck_record r
+                 JOIN `user` u ON u.uid = r.uid AND u.region_id = r.region_id
+                 WHERE r.create_time BETWEEN #{startTime} AND #{endTime}
+                 <include refid="userCountryCondition" />
+                 GROUP BY r.uid, DATE(r.create_time)
+                 HAVING COUNT(DISTINCT r.order_id) &gt;= 2
+             ) repeat_user) AS repeatUsers
+    </select>
+
+    <select id="selectCountries" resultType="java.lang.String">
+        SELECT DISTINCT country
+        FROM `user`
+        WHERE region_id = #{regionId}
+          AND country IS NOT NULL AND country != ''
+        ORDER BY country
+    </select>
+</mapper>

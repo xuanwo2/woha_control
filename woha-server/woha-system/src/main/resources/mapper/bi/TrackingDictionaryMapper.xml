@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.woha.business.bi.mapper.TrackingDictionaryMapper">
+
+    <resultMap id="eventResult" type="com.woha.business.bi.domain.TrackingEvent">
+        <id property="eventId" column="event_id" />
+        <result property="moduleName" column="module_name" />
+        <result property="priority" column="priority" />
+        <result property="eventLabel" column="event_label" />
+        <result property="eventName" column="event_name" />
+        <result property="reportTerminal" column="report_terminal" />
+        <result property="triggerTiming" column="trigger_timing" />
+        <result property="metricCodes" column="metric_codes" />
+        <result property="versionNo" column="version_no" />
+        <result property="status" column="status" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <resultMap id="commonParamResult" type="com.woha.business.bi.domain.TrackingCommonParam">
+        <id property="commonParamId" column="common_param_id" />
+        <result property="paramName" column="param_name" />
+        <result property="paramType" column="param_type" />
+        <result property="description" column="description" />
+        <result property="versionNo" column="version_no" />
+        <result property="status" column="status" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <resultMap id="changeResult" type="com.woha.business.bi.domain.TrackingChangeRecord">
+        <id property="changeId" column="change_id" />
+        <result property="eventId" column="event_id" />
+        <result property="eventName" column="event_name" />
+        <result property="changeType" column="change_type" />
+        <result property="changeReason" column="change_reason" />
+        <result property="snapshotJson" column="snapshot_json" />
+        <result property="approvalStatus" column="approval_status" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="approveBy" column="approve_by" />
+        <result property="approveTime" column="approve_time" />
+        <result property="approvalRemark" column="approval_remark" />
+    </resultMap>
+
+    <select id="selectEventList" resultMap="eventResult">
+        SELECT event_id, module_name, priority, event_label, event_name, report_terminal,
+               trigger_timing, metric_codes, version_no, status, create_by, create_time,
+               update_by, update_time, remark
+        FROM bi_tracking_event
+        <where>
+            <if test="moduleName != null and moduleName != ''">AND module_name = #{moduleName}</if>
+            <if test="reportTerminal != null and reportTerminal != ''">AND report_terminal = #{reportTerminal}</if>
+            <if test="status != null and status != ''">AND status = #{status}</if>
+            <if test="keyword != null and keyword != ''">
+                AND (event_name LIKE CONCAT('%', #{keyword}, '%')
+                    OR event_label LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+        </where>
+        ORDER BY FIELD(priority, 'P0', 'P1', 'P2', '--'), event_id
+    </select>
+
+    <select id="selectEventById" resultMap="eventResult">
+        SELECT event_id, module_name, priority, event_label, event_name, report_terminal,
+               trigger_timing, metric_codes, version_no, status, create_by, create_time,
+               update_by, update_time, remark
+        FROM bi_tracking_event WHERE event_id = #{eventId}
+    </select>
+
+    <select id="selectEventParams" resultType="com.woha.business.bi.domain.TrackingEventParam">
+        SELECT param_id AS paramId, event_id AS eventId, param_name AS paramName,
+               param_type AS paramType, required_flag AS requiredFlag,
+               common_flag AS commonFlag, description, sort_order AS sortOrder
+        FROM bi_tracking_event_param WHERE event_id = #{eventId}
+        ORDER BY sort_order, param_id
+    </select>
+
+    <select id="selectModules" resultType="java.lang.String">
+        SELECT DISTINCT module_name FROM bi_tracking_event ORDER BY module_name
+    </select>
+
+    <select id="countEventName" resultType="int">
+        SELECT COUNT(1) FROM bi_tracking_event
+        WHERE event_name = #{eventName}
+        <if test="eventId != null">AND event_id != #{eventId}</if>
+    </select>
+
+    <insert id="insertEvent" useGeneratedKeys="true" keyProperty="eventId">
+        INSERT INTO bi_tracking_event(module_name, priority, event_label, event_name,
+            report_terminal, trigger_timing, metric_codes, version_no, status,
+            create_by, create_time, remark)
+        VALUES(#{moduleName}, #{priority}, #{eventLabel}, #{eventName}, #{reportTerminal},
+            #{triggerTiming}, #{metricCodes}, #{versionNo}, #{status}, #{createBy}, SYSDATE(), #{remark})
+    </insert>
+
+    <update id="updateEvent">
+        UPDATE bi_tracking_event SET module_name = #{moduleName}, priority = #{priority},
+            event_label = #{eventLabel}, event_name = #{eventName},
+            report_terminal = #{reportTerminal}, trigger_timing = #{triggerTiming},
+            metric_codes = #{metricCodes}, version_no = #{versionNo}, status = #{status},
+            update_by = #{updateBy}, update_time = SYSDATE(), remark = #{remark}
+        WHERE event_id = #{eventId}
+    </update>
+
+    <update id="updateEventStatus">
+        UPDATE bi_tracking_event SET status = #{status}, update_by = #{updateBy},
+            update_time = SYSDATE() WHERE event_id = #{eventId}
+    </update>
+
+    <delete id="deleteEventParams">
+        DELETE FROM bi_tracking_event_param WHERE event_id = #{eventId}
+    </delete>
+
+    <insert id="insertEventParam" useGeneratedKeys="true" keyProperty="paramId">
+        INSERT INTO bi_tracking_event_param(event_id, param_name, param_type, required_flag,
+            common_flag, description, sort_order)
+        VALUES(#{eventId}, #{paramName}, #{paramType}, #{requiredFlag}, #{commonFlag},
+            #{description}, #{sortOrder})
+    </insert>
+
+    <select id="selectCommonParamList" resultMap="commonParamResult">
+        SELECT common_param_id, param_name, param_type, description, version_no, status,
+               create_by, create_time, update_by, update_time
+        FROM bi_tracking_common_param
+        <where>
+            <if test="paramName != null and paramName != ''">
+                AND (param_name LIKE CONCAT('%', #{paramName}, '%')
+                    OR description LIKE CONCAT('%', #{paramName}, '%'))
+            </if>
+            <if test="status != null and status != ''">AND status = #{status}</if>
+        </where>
+        ORDER BY common_param_id
+    </select>
+
+    <select id="selectCommonParamById" resultMap="commonParamResult">
+        SELECT common_param_id, param_name, param_type, description, version_no, status,
+               create_by, create_time, update_by, update_time
+        FROM bi_tracking_common_param WHERE common_param_id = #{commonParamId}
+    </select>
+
+    <select id="countCommonParamName" resultType="int">
+        SELECT COUNT(1) FROM bi_tracking_common_param WHERE param_name = #{paramName}
+        <if test="commonParamId != null">AND common_param_id != #{commonParamId}</if>
+    </select>
+
+    <insert id="insertCommonParam" useGeneratedKeys="true" keyProperty="commonParamId">
+        INSERT INTO bi_tracking_common_param(param_name, param_type, description, version_no,
+            status, create_by, create_time)
+        VALUES(#{paramName}, #{paramType}, #{description}, #{versionNo}, #{status},
+            #{createBy}, SYSDATE())
+    </insert>
+
+    <update id="updateCommonParam">
+        UPDATE bi_tracking_common_param SET param_name = #{paramName}, param_type = #{paramType},
+            description = #{description}, version_no = #{versionNo}, status = #{status},
+            update_by = #{updateBy}, update_time = SYSDATE()
+        WHERE common_param_id = #{commonParamId}
+    </update>
+
+    <update id="updateCommonParamStatus">
+        UPDATE bi_tracking_common_param SET status = #{status}, update_by = #{updateBy},
+            update_time = SYSDATE() WHERE common_param_id = #{commonParamId}
+    </update>
+
+    <select id="selectChangeList" resultMap="changeResult">
+        SELECT c.change_id, c.event_id, e.event_name, c.change_type, c.change_reason,
+               c.snapshot_json, c.approval_status, c.create_by, c.create_time,
+               c.approve_by, c.approve_time, c.approval_remark
+        FROM bi_tracking_change_record c
+        LEFT JOIN bi_tracking_event e ON e.event_id = c.event_id
+        <where>
+            <if test="approvalStatus != null and approvalStatus != ''">
+                AND c.approval_status = #{approvalStatus}
+            </if>
+            <if test="eventName != null and eventName != ''">
+                AND e.event_name LIKE CONCAT('%', #{eventName}, '%')
+            </if>
+        </where>
+        ORDER BY c.change_id DESC
+    </select>
+
+    <select id="selectChangeById" resultMap="changeResult">
+        SELECT c.change_id, c.event_id, e.event_name, c.change_type, c.change_reason,
+               c.snapshot_json, c.approval_status, c.create_by, c.create_time,
+               c.approve_by, c.approve_time, c.approval_remark
+        FROM bi_tracking_change_record c
+        LEFT JOIN bi_tracking_event e ON e.event_id = c.event_id
+        WHERE c.change_id = #{changeId}
+    </select>
+
+    <select id="countPendingChange" resultType="int">
+        SELECT COUNT(1) FROM bi_tracking_change_record
+        WHERE event_id = #{eventId} AND approval_status = '0'
+    </select>
+
+    <insert id="insertChangeRecord" useGeneratedKeys="true" keyProperty="changeId">
+        INSERT INTO bi_tracking_change_record(event_id, change_type, change_reason,
+            snapshot_json, approval_status, create_by, create_time, approve_by, approve_time,
+            approval_remark)
+        VALUES(#{eventId}, #{changeType}, #{changeReason}, #{snapshotJson}, #{approvalStatus},
+            #{createBy}, SYSDATE(), #{approveBy},
+            <choose><when test="approveBy != null and approveBy != ''">SYSDATE()</when><otherwise>NULL</otherwise></choose>,
+            #{approvalRemark})
+    </insert>
+
+    <update id="reviewChange">
+        UPDATE bi_tracking_change_record SET approval_status = #{approvalStatus},
+            approval_remark = #{approvalRemark}, approve_by = #{approveBy},
+            approve_time = SYSDATE()
+        WHERE change_id = #{changeId} AND approval_status = '0'
+    </update>
+</mapper>

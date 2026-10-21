@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.woha.business.bi.mapper.RevenueDashboardMapper">
+
+    <sql id="userCountryCondition">
+        AND u.region_id = #{query.regionId}
+        <if test="query.country != null and query.country != ''">
+            AND u.country = #{query.country}
+        </if>
+    </sql>
+
+    <sql id="chargeCountryCondition">
+        AND cr.region_id = #{query.regionId}
+        <if test="query.country != null and query.country != ''">
+            AND cr.country = #{query.country}
+        </if>
+    </sql>
+
+    <sql id="proxyChargeCountryCondition">
+        AND cpr.region_id = #{query.regionId}
+        <if test="query.country != null and query.country != ''">
+            AND cpr.country = #{query.country}
+        </if>
+    </sql>
+
+    <sql id="withdrawCountryCondition">
+        AND bw.region_id = #{query.regionId}
+        <if test="query.country != null and query.country != ''">
+            AND bw.country = #{query.country}
+        </if>
+    </sql>
+
+    <!-- 充值成功状态固定为 2；提现状态 0 为审核中、1 为通过、2 为拒绝。 -->
+    <select id="selectSummary" resultType="java.util.Map">
+        SELECT
+            (SELECT COUNT(DISTINCT alr.uid)
+             FROM account_login_record alr
+             JOIN `user` u ON u.uid = alr.uid AND u.region_id = alr.region_id
+             WHERE alr.create_time BETWEEN #{startTime} AND #{endTime}
+             <include refid="userCountryCondition" />) AS activeUsers,
+            (SELECT IFNULL(SUM(pay.amount_usd), 0)
+             FROM (
+                 SELECT cr.amount_usd
+                 FROM charge_record cr
+                 WHERE cr.charge_status = 2
+                   AND cr.channel NOT IN ('REDPACKET_GET_PAY', 'PROXY_PAY')
+                   AND cr.create_time BETWEEN #{startTime} AND #{endTime}
+                 <include refid="chargeCountryCondition" />
+                 UNION ALL
+                 SELECT cpr.amount_usd
+                 FROM charge_proxy_record cpr
+                 WHERE cpr.charge_status = 2
+                   AND cpr.create_time BETWEEN #{startTime} AND #{endTime}
+                 <include refid="proxyChargeCountryCondition" />
+             ) pay) AS gmv,
+            (SELECT IFNULL(SUM(cr.total_gold), 0)
+             FROM charge_record cr
+             WHERE cr.charge_status = 2
+               AND cr.channel != 'REDPACKET_GET_PAY'
+               AND cr.create_time BETWEEN #{startTime} AND #{endTime}
+             <include refid="chargeCountryCondition" />) AS trueRevenueGold,
+            (SELECT COUNT(DISTINCT pay.uid)
+             FROM (
+                 SELECT cr.uid
+                 FROM charge_record cr
+                 WHERE cr.charge_status = 2
+                   AND cr.channel NOT IN ('REDPACKET_GET_PAY', 'PROXY_PAY')
+                   AND cr.create_time BETWEEN #{startTime} AND #{endTime}
+                 <include refid="chargeCountryCondition" />
+                 UNION ALL
+                 SELECT cpr.uid
+                 FROM charge_proxy_record cpr
+                 WHERE cpr.charge_status = 2
+                   AND cpr.create_time BETWEEN #{startTime} AND #{endTime}
+                 <include refid="proxyChargeCountryCondition" />
+             ) pay) AS payUsers,
+            (SELECT COUNT(DISTINCT period_pay.uid)
+             FROM (
+                 SELECT cr.region_id, cr.uid, cr.create_time
+                 FROM charge_record cr
+                 WHERE cr.charge_status = 2
+                   AND cr.channel NOT IN ('REDPACKET_GET_PAY', 'PROXY_PAY')
+                 <include refid="chargeCountryCondition" />
+                 UNION ALL
+                 SELECT cpr.region_id, cpr.uid, cpr.create_time
+                 FROM charge_proxy_record cpr
+                 WHERE cpr.charge_status = 2
+                 <include refid="proxyChargeCountryCondition" />
+             ) period_pay
+             JOIN (
+                 SELECT all_pay.region_id, all_pay.uid, MIN(all_pay.create_time) AS first_time
+                 FROM (
+                    SELECT region_id, uid, create_time FROM charge_record
+                    WHERE charge_status = 2 AND channel NOT IN ('REDPACKET_GET_PAY', 'PROXY_PAY')
+                      AND region_id = #{query.regionId}
+                    UNION ALL
+                    SELECT region_id, uid, create_time FROM charge_proxy_record
+                    WHERE charge_status = 2 AND region_id = #{query.regionId}
+                 ) all_pay
+                 GROUP BY all_pay.region_id, all_pay.uid
+             ) first_pay ON first_pay.uid = period_pay.uid
+                        AND first_pay.region_id = period_pay.region_id
+                        AND first_pay.first_time = period_pay.create_time
+             WHERE period_pay.create_time BETWEEN #{startTime} AND #{endTime}) AS firstPayUsers,
+            (SELECT IFNULL(SUM(bw.usd_amount), 0)
+             FROM bill_withdraw bw
+             WHERE bw.status = 1 AND bw.done_time BETWEEN #{startTime} AND #{endTime}
+             <include refid="withdrawCountryCondition" />) AS withdrawAmount,
+            (SELECT COUNT(0) FROM bill_withdraw bw
+             WHERE bw.create_time BETWEEN #{startTime} AND #{endTime}
+             <include refid="withdrawCountryCondition" />) AS withdrawApplications,
+            (SELECT COUNT(0) FROM bill_withdraw bw
+             WHERE bw.status IN (1, 2) AND bw.create_time BETWEEN #{startTime} AND #{endTime}
+             <include refid="withdrawCountryCondition" />) AS processedWithdrawals,
+            (SELECT COUNT(0) FROM bill_withdraw bw
+             WHERE bw.status = 1 AND bw.create_time BETWEEN #{startTime} AND #{endTime}
+             <include refid="withdrawCountryCondition" />) AS successfulWithdrawals,
+            (SELECT IFNULL(SUM(bg.gold_num), 0)
+             FROM bill_gold bg
+             JOIN `user` u ON u.uid = bg.uid AND u.region_id = bg.region_id
+             WHERE bg.type = 2 AND bg.bill_type IN (30, 36, 37)
+               AND bg.create_time BETWEEN #{startTime} AND #{endTime}
+             <include refid="userCountryCondition" />) AS giftGold,
+            (SELECT COUNT(DISTINCT gr.uid)
+             FROM gift_record gr
+             JOIN `user` u ON u.uid = gr.uid AND u.region_id = gr.region_id
+             WHERE gr.create_time BETWEEN #{startTime} AND #{endTime}
+             <include refid="userCountryCondition" />) AS giftSendUsers,
+            (SELECT COUNT(DISTINCT gr.receive_uid)
+             FROM gift_record gr
+             JOIN `user` u ON u.uid = gr.uid AND u.region_id = gr.region_id
+             WHERE gr.create_time BETWEEN #{startTime} AND #{endTime}
+             <include refid="userCountryCondition" />) AS giftReceiveUsers,
+            (SELECT COUNT(DISTINCT vr.uid)
+             FROM user_vip_record vr
+             JOIN charge_record cr ON cr.order_id = CAST(vr.order_id AS CHAR)
+                                  AND cr.region_id = vr.region_id AND cr.charge_status = 2
+             WHERE vr.create_time BETWEEN #{startTime} AND #{endTime}
+             <include refid="chargeCountryCondition" />) AS vipBuyUsers,
+            (SELECT COUNT(DISTINCT vr.order_id)
+             FROM user_vip_record vr
+             JOIN charge_record cr ON cr.order_id = CAST(vr.order_id AS CHAR)
+                                  AND cr.region_id = vr.region_id AND cr.charge_status = 2
+             WHERE vr.create_time BETWEEN #{startTime} AND #{endTime}
+             <include refid="chargeCountryCondition" />) AS vipBuyOrders,
+            (SELECT IFNULL(SUM(cr.amount_usd), 0)
+             FROM user_vip_record vr
+             JOIN charge_record cr ON cr.order_id = CAST(vr.order_id AS CHAR)
+                                  AND cr.region_id = vr.region_id AND cr.charge_status = 2
+             WHERE vr.create_time BETWEEN #{startTime} AND #{endTime}
+             <include refid="chargeCountryCondition" />) AS vipAmount,
+            (SELECT COUNT(DISTINCT nr.uid)
+             FROM user_noble_record nr
+             JOIN bill_gold bg ON bg.order_id = nr.order_id AND bg.region_id = nr.region_id
+                              AND bg.type = 2 AND bg.bill_type = 26
+             JOIN `user` u ON u.uid = nr.uid AND u.region_id = nr.region_id
+             WHERE nr.create_time BETWEEN #{startTime} AND #{endTime}
+             <include refid="userCountryCondition" />) AS nobleBuyUsers,
+            (SELECT COUNT(DISTINCT nr.order_id)
+             FROM user_noble_record nr
+             JOIN bill_gold bg ON bg.order_id = nr.order_id AND bg.region_id = nr.region_id
+                              AND bg.type = 2 AND bg.bill_type = 26
+             JOIN `user` u ON u.uid = nr.uid AND u.region_id = nr.region_id
+             WHERE nr.create_time BETWEEN #{startTime} AND #{endTime}
+             <include refid="userCountryCondition" />) AS nobleBuyOrders,
+            (SELECT IFNULL(SUM(bg.gold_num), 0)
+             FROM user_noble_record nr
+             JOIN bill_gold bg ON bg.order_id = nr.order_id AND bg.region_id = nr.region_id
+                              AND bg.type = 2 AND bg.bill_type = 26
+             JOIN `user` u ON u.uid = nr.uid AND u.region_id = nr.region_id
+             WHERE nr.create_time BETWEEN #{startTime} AND #{endTime}
+             <include refid="userCountryCondition" />) AS nobleGold,
+            (SELECT IFNULL(SUM(up.gold_num), 0)
+             FROM user_purse up JOIN `user` u ON u.uid = up.uid AND u.region_id = up.region_id
+             WHERE 1 = 1 <include refid="userCountryCondition" />) AS walletGold,
+            (SELECT IFNULL(SUM(up.proxy_gold_num), 0)
+             FROM user_purse up JOIN `user` u ON u.uid = up.uid AND u.region_id = up.region_id
+             WHERE 1 = 1 <include refid="userCountryCondition" />) AS walletProxyGold,
+            (SELECT IFNULL(SUM(up.diamond_num), 0)
+             FROM user_purse up JOIN `user` u ON u.uid = up.uid AND u.region_id = up.region_id
+             WHERE 1 = 1 <include refid="userCountryCondition" />) AS walletDiamond,
+            (SELECT COUNT(DISTINCT bg.uid)
+             FROM bill_gold bg JOIN `user` u ON u.uid = bg.uid AND u.region_id = bg.region_id
+             WHERE bg.type = 2 AND bg.bill_type = 21
+               AND bg.create_time BETWEEN #{startTime} AND #{endTime}
+             <include refid="userCountryCondition" />) AS propBuyUsers,
+            (SELECT IFNULL(SUM(bg.gold_num), 0)
+             FROM bill_gold bg JOIN `user` u ON u.uid = bg.uid AND u.region_id = bg.region_id
+             WHERE bg.type = 2 AND bg.bill_type = 21
+               AND bg.create_time BETWEEN #{startTime} AND #{endTime}
+             <include refid="userCountryCondition" />) AS propGold
+    </select>
+
+    <select id="selectPaymentChannels" resultType="java.util.Map">
+        SELECT pay.channel_name AS name,
+               IFNULL(SUM(pay.amount_usd), 0) AS amount,
+               COUNT(0) AS orders,
+               COUNT(DISTINCT pay.uid) AS users
+        FROM (
+            SELECT IFNULL(NULLIF(cr.channel, ''), '未知渠道') AS channel_name, cr.amount_usd, cr.uid
+            FROM charge_record cr
+            WHERE cr.charge_status = 2
+              AND cr.channel NOT IN ('REDPACKET_GET_PAY', 'PROXY_PAY')
+              AND cr.create_time BETWEEN #{startTime} AND #{endTime}
+            <include refid="chargeCountryCondition" />
+            UNION ALL
+            SELECT CONCAT('代理/', IFNULL(NULLIF(cpr.channel, ''), '线下')) AS channel_name,
+                   cpr.amount_usd, cpr.uid
+            FROM charge_proxy_record cpr
+            WHERE cpr.charge_status = 2
+              AND cpr.create_time BETWEEN #{startTime} AND #{endTime}
+            <include refid="proxyChargeCountryCondition" />
+        ) pay
+        GROUP BY pay.channel_name
+        ORDER BY amount DESC
+    </select>
+
+    <select id="selectChargeTiers" resultType="java.util.Map">
+        SELECT CONCAT('$', CAST(pay.amount_usd AS CHAR)) AS name,
+               IFNULL(SUM(pay.amount_usd), 0) AS amount,
+               COUNT(0) AS orders,
+               COUNT(DISTINCT pay.uid) AS users
+        FROM (
+            SELECT cr.amount_usd, cr.uid
+            FROM charge_record cr
+            WHERE cr.charge_status = 2
+              AND cr.channel NOT IN ('REDPACKET_GET_PAY', 'PROXY_PAY')
+              AND cr.create_time BETWEEN #{startTime} AND #{endTime}
+            <include refid="chargeCountryCondition" />
+            UNION ALL
+            SELECT cpr.amount_usd, cpr.uid
+            FROM charge_proxy_record cpr
+            WHERE cpr.charge_status = 2
+              AND cpr.create_time BETWEEN #{startTime} AND #{endTime}
+            <include refid="proxyChargeCountryCondition" />
+        ) pay
+        GROUP BY pay.amount_usd
+        ORDER BY pay.amount_usd ASC
+    </select>
+
+    <select id="selectTrend" resultType="java.util.Map">
+        SELECT DATE_FORMAT(flow.stat_date, '%Y-%m-%d') AS statDate,
+               IFNULL(SUM(flow.gmv), 0) AS gmv,
+               IFNULL(SUM(flow.true_revenue_gold), 0) AS trueRevenueGold,
+               IFNULL(SUM(flow.withdraw_amount), 0) AS withdrawAmount
+        FROM (
+            SELECT DATE(cr.create_time) AS stat_date, SUM(cr.amount_usd) AS gmv,
+                   0 AS true_revenue_gold, 0 AS withdraw_amount
+            FROM charge_record cr
+            WHERE cr.charge_status = 2
+              AND cr.channel NOT IN ('REDPACKET_GET_PAY', 'PROXY_PAY')
+              AND cr.create_time BETWEEN #{startTime} AND #{endTime}
+            <include refid="chargeCountryCondition" />
+            GROUP BY DATE(cr.create_time)
+            UNION ALL
+            SELECT DATE(cpr.create_time), SUM(cpr.amount_usd), 0, 0
+            FROM charge_proxy_record cpr
+            WHERE cpr.charge_status = 2
+              AND cpr.create_time BETWEEN #{startTime} AND #{endTime}
+            <include refid="proxyChargeCountryCondition" />
+            GROUP BY DATE(cpr.create_time)
+            UNION ALL
+            SELECT DATE(cr.create_time), 0, SUM(cr.total_gold), 0
+            FROM charge_record cr
+            WHERE cr.charge_status = 2
+              AND cr.channel != 'REDPACKET_GET_PAY'
+              AND cr.create_time BETWEEN #{startTime} AND #{endTime}
+            <include refid="chargeCountryCondition" />
+            GROUP BY DATE(cr.create_time)
+            UNION ALL
+            SELECT DATE(bw.done_time), 0, 0, SUM(bw.usd_amount)
+            FROM bill_withdraw bw
+            WHERE bw.status = 1 AND bw.done_time BETWEEN #{startTime} AND #{endTime}
+            <include refid="withdrawCountryCondition" />
+            GROUP BY DATE(bw.done_time)
+        ) flow
+        GROUP BY flow.stat_date
+        ORDER BY flow.stat_date
+    </select>
+
+    <select id="selectCountries" resultType="java.lang.String">
+        SELECT DISTINCT country
+        FROM `user`
+        WHERE region_id = #{regionId}
+          AND country IS NOT NULL AND country != ''
+        ORDER BY country
+    </select>
+</mapper>

@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.woha.business.bi.mapper.PlatformDashboardMapper">
+
+    <sql id="userDimensionJoin">
+        <if test="(query.country != null and query.country != '') or (query.channel != null and query.channel != '')">
+            JOIN `user` u ON u.uid = ${recordAlias}.uid AND u.region_id = ${recordAlias}.region_id
+        </if>
+    </sql>
+
+    <sql id="userDimensionCondition">
+        AND ${recordAlias}.region_id = #{query.regionId}
+        <if test="query.country != null and query.country != ''">
+            AND u.country = #{query.country}
+        </if>
+        <if test="query.channel != null and query.channel != ''">
+            AND u.app = #{query.channel}
+        </if>
+    </sql>
+
+    <select id="selectKpi" resultType="java.util.Map">
+        WITH charge_kpi AS (
+            SELECT IFNULL(SUM(CASE WHEN cr.channel NOT IN ('REDPACKET_GET_PAY', 'PROXY_PAY')
+                THEN cr.amount_usd ELSE 0 END), 0) AS chargeAmount,
+                   IFNULL(SUM(CASE WHEN cr.channel != 'REDPACKET_GET_PAY'
+                THEN cr.total_gold ELSE 0 END), 0) / 10000 AS saleAmount
+            FROM charge_record cr
+            <include refid="userDimensionJoin"><property name="recordAlias" value="cr" /></include>
+            WHERE cr.charge_status = 2
+              AND cr.create_time BETWEEN #{startTime} AND #{endTime}
+            <include refid="userDimensionCondition"><property name="recordAlias" value="cr" /></include>
+        ),
+        proxy_charge_kpi AS (
+            SELECT IFNULL(SUM(cpr.amount_usd), 0) AS proxyChargeAmount
+            FROM charge_proxy_record cpr
+            <include refid="userDimensionJoin"><property name="recordAlias" value="cpr" /></include>
+            WHERE cpr.charge_status = 2
+              AND cpr.create_time BETWEEN #{startTime} AND #{endTime}
+            <include refid="userDimensionCondition"><property name="recordAlias" value="cpr" /></include>
+        ),
+        gift_kpi AS (
+            SELECT IFNULL(SUM(bg.gold_num), 0) AS giftGold
+            FROM bill_gold bg
+            <include refid="userDimensionJoin"><property name="recordAlias" value="bg" /></include>
+            WHERE bg.type = 2
+              AND bg.bill_type IN (30, 36, 37)
+              AND bg.create_time BETWEEN #{startTime} AND #{endTime}
+            <include refid="userDimensionCondition"><property name="recordAlias" value="bg" /></include>
+        ),
+        room_kpi AS (
+            SELECT COUNT(0) AS onlineRooms,
+                   IFNULL(SUM(r.online_num), 0) AS onlineUsers
+            FROM fm_room r
+            <include refid="userDimensionJoin"><property name="recordAlias" value="r" /></include>
+            WHERE r.online_num &gt; 0
+            <include refid="userDimensionCondition"><property name="recordAlias" value="r" /></include>
+        )
+        SELECT
+            (SELECT COUNT(DISTINCT alr.uid)
+             FROM account_login_record alr
+             <include refid="userDimensionJoin"><property name="recordAlias" value="alr" /></include>
+             WHERE alr.create_time BETWEEN #{startTime} AND #{endTime}
+             <include refid="userDimensionCondition"><property name="recordAlias" value="alr" /></include>) AS dau,
+            (SELECT COUNT(DISTINCT a.uid)
+             FROM account a
+             <include refid="userDimensionJoin"><property name="recordAlias" value="a" /></include>
+             WHERE a.register_date BETWEEN DATE(#{startTime}) AND DATE(#{endTime})
+             <include refid="userDimensionCondition"><property name="recordAlias" value="a" /></include>) AS dnu,
+            charge_kpi.chargeAmount + proxy_charge_kpi.proxyChargeAmount AS gmv,
+            charge_kpi.saleAmount AS netRevenue,
+            gift_kpi.giftGold AS giftGold,
+            room_kpi.onlineRooms AS onlineRooms,
+            room_kpi.onlineUsers AS onlineUsers
+        FROM charge_kpi
+        CROSS JOIN proxy_charge_kpi
+        CROSS JOIN gift_kpi
+        CROSS JOIN room_kpi
+    </select>
+
+    <sql id="settledRevenueCondition">
+        <if test="query.country != null and query.country != ''">
+            AND country = #{query.country}
+        </if>
+    </sql>
+
+    <select id="selectSettledRevenue" resultType="java.util.Map">
+        WITH settled_dau AS (
+            SELECT COUNT(DISTINCT alr.uid) AS value
+            FROM account_login_record alr
+            <include refid="userDimensionJoin"><property name="recordAlias" value="alr" /></include>
+            WHERE alr.create_time &gt;= CONCAT(#{startDate}, ' 00:00:00')
+              AND alr.create_time &lt; DATE_ADD(#{endDate}, INTERVAL 1 DAY)
+            <include refid="userDimensionCondition"><property name="recordAlias" value="alr" /></include>
+        ),
+        settled_pay_users AS (
+            SELECT COUNT(DISTINCT pay.uid) AS value
+            FROM (
+                SELECT cr.uid
+                FROM charge_record cr
+                <include refid="userDimensionJoin"><property name="recordAlias" value="cr" /></include>
+                WHERE cr.charge_status = 2
+                  AND cr.channel NOT IN ('REDPACKET_GET_PAY', 'PROXY_PAY')
+                  AND cr.create_time &gt;= CONCAT(#{startDate}, ' 00:00:00')
+                  AND cr.create_time &lt; DATE_ADD(#{endDate}, INTERVAL 1 DAY)
+                <include refid="userDimensionCondition"><property name="recordAlias" value="cr" /></include>
+                UNION ALL
+                SELECT cpr.uid
+                FROM charge_proxy_record cpr
+                <include refid="userDimensionJoin"><property name="recordAlias" value="cpr" /></include>
+                WHERE cpr.charge_status = 2
+                  AND cpr.create_time &gt;= CONCAT(#{startDate}, ' 00:00:00')
+                  AND cpr.create_time &lt; DATE_ADD(#{endDate}, INTERVAL 1 DAY)
+                <include refid="userDimensionCondition"><property name="recordAlias" value="cpr" /></include>
+            ) pay
+        )
+        SELECT settled_dau.value AS settledDau,
+               settled_pay_users.value AS settledPayUsers
+        FROM settled_dau
+        CROSS JOIN settled_pay_users
+    </select>
+
+    <select id="selectSettledRevenueTrend" resultType="java.util.Map">
+        WITH revenue_flow AS (
+            SELECT DATE(cr.create_time) AS stat_date,
+                   IFNULL(SUM(cr.total_gold), 0) / 10000 AS net_revenue,
+                   0 AS withdraw_amount
+            FROM charge_record cr
+            <include refid="userDimensionJoin"><property name="recordAlias" value="cr" /></include>
+            WHERE cr.charge_status = 2
+              AND cr.channel != 'REDPACKET_GET_PAY'
+              AND cr.create_time &gt;= CONCAT(#{startDate}, ' 00:00:00')
+              AND cr.create_time &lt; DATE_ADD(#{endDate}, INTERVAL 1 DAY)
+            <include refid="userDimensionCondition"><property name="recordAlias" value="cr" /></include>
+            GROUP BY DATE(cr.create_time)
+            UNION ALL
+            SELECT DATE(bw.done_time) AS stat_date,
+                   0 AS net_revenue,
+                   IFNULL(SUM(bw.usd_amount), 0) AS withdraw_amount
+            FROM bill_withdraw bw
+            <include refid="userDimensionJoin"><property name="recordAlias" value="bw" /></include>
+            WHERE bw.status = 1
+              AND bw.done_time &gt;= CONCAT(#{startDate}, ' 00:00:00')
+              AND bw.done_time &lt; DATE_ADD(#{endDate}, INTERVAL 1 DAY)
+            <include refid="userDimensionCondition"><property name="recordAlias" value="bw" /></include>
+            GROUP BY DATE(bw.done_time)
+        )
+        SELECT DATE_FORMAT(stat_date, '%Y-%m-%d') AS statDate,
+               IFNULL(SUM(net_revenue), 0) AS netRevenue,
+               IFNULL(SUM(net_revenue - withdraw_amount), 0) AS grossProfit
+        FROM revenue_flow
+        GROUP BY stat_date
+        ORDER BY stat_date
+    </select>
+
+    <select id="selectDailyTrend" resultType="java.util.Map">
+        WITH RECURSIVE days AS (
+            SELECT DATE(#{startTime}) AS stat_date
+            UNION ALL
+            SELECT DATE_ADD(stat_date, INTERVAL 1 DAY)
+            FROM days
+            WHERE stat_date &lt; DATE(#{endTime})
+        ),
+        charge_daily AS (
+            SELECT DATE(cr.create_time) AS stat_date,
+                   IFNULL(SUM(cr.amount_usd), 0) AS gmv
+            FROM charge_record cr
+            <include refid="userDimensionJoin"><property name="recordAlias" value="cr" /></include>
+            WHERE cr.charge_status = 2
+              AND cr.channel NOT IN ('REDPACKET_GET_PAY', 'PROXY_PAY')
+              AND cr.create_time BETWEEN #{startTime} AND #{endTime}
+            <include refid="userDimensionCondition"><property name="recordAlias" value="cr" /></include>
+            GROUP BY DATE(cr.create_time)
+        ),
+        proxy_charge_daily AS (
+            SELECT DATE(cpr.create_time) AS stat_date,
+                   IFNULL(SUM(cpr.amount_usd), 0) AS gmv
+            FROM charge_proxy_record cpr
+            <include refid="userDimensionJoin"><property name="recordAlias" value="cpr" /></include>
+            WHERE cpr.charge_status = 2
+              AND cpr.create_time BETWEEN #{startTime} AND #{endTime}
+            <include refid="userDimensionCondition"><property name="recordAlias" value="cpr" /></include>
+            GROUP BY DATE(cpr.create_time)
+        ),
+        login_daily AS (
+            SELECT DATE(alr.create_time) AS stat_date,
+                   COUNT(DISTINCT alr.uid) AS dau
+            FROM account_login_record alr
+            <include refid="userDimensionJoin"><property name="recordAlias" value="alr" /></include>
+            WHERE alr.create_time BETWEEN #{startTime} AND #{endTime}
+            <include refid="userDimensionCondition"><property name="recordAlias" value="alr" /></include>
+            GROUP BY DATE(alr.create_time)
+        )
+        SELECT DATE_FORMAT(days.stat_date, '%Y-%m-%d') AS statDate,
+               IFNULL(charge_daily.gmv, 0) + IFNULL(proxy_charge_daily.gmv, 0) AS gmv,
+               IFNULL(login_daily.dau, 0) AS dau
+        FROM days
+        LEFT JOIN charge_daily ON charge_daily.stat_date = days.stat_date
+        LEFT JOIN proxy_charge_daily ON proxy_charge_daily.stat_date = days.stat_date
+        LEFT JOIN login_daily ON login_daily.stat_date = days.stat_date
+        ORDER BY days.stat_date
+    </select>
+
+    <select id="selectOnlineTrend" resultType="java.util.Map">
+        WITH RECURSIVE time_points AS (
+            SELECT DATE_SUB(DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:00'), INTERVAL 55 MINUTE) AS stat_time
+            UNION ALL
+            SELECT DATE_ADD(stat_time, INTERVAL 5 MINUTE)
+            FROM time_points
+            WHERE stat_time &lt; DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:00')
+        ),
+        online_sessions AS (
+            SELECT uot.uid,
+                   uot.create_time,
+                   uot.update_time
+            FROM user_online_time uot
+            <include refid="userDimensionJoin"><property name="recordAlias" value="uot" /></include>
+            WHERE uot.region_id = #{query.regionId}
+              AND uot.create_time &lt;= NOW()
+              AND (uot.update_time IS NULL
+                   OR uot.update_time &gt;= DATE_SUB(NOW(), INTERVAL 55 MINUTE))
+            <if test="query.country != null and query.country != ''">
+             AND u.country = #{query.country}
+            </if>
+            <if test="query.channel != null and query.channel != ''">
+             AND u.app = #{query.channel}
+            </if>
+        )
+        SELECT DATE_FORMAT(tp.stat_time, '%H:%i') AS statTime,
+               COUNT(DISTINCT os.uid) AS onlineUsers
+        FROM time_points tp
+        LEFT JOIN online_sessions os
+          ON os.create_time &lt;= tp.stat_time
+         AND (os.update_time IS NULL OR os.update_time &gt;= tp.stat_time)
+        GROUP BY tp.stat_time
+        ORDER BY tp.stat_time
+    </select>
+
+    <select id="selectRegionRank" resultType="java.util.Map">
+        SELECT IFNULL(NULLIF(u.country, ''), '未知') AS country,
+               IFNULL(SUM(cr.amount_usd), 0) AS amount,
+               COUNT(DISTINCT cr.uid) AS payUsers
+        FROM charge_record cr
+        JOIN `user` u ON u.uid = cr.uid AND u.region_id = cr.region_id
+        WHERE cr.charge_status = 2
+          AND cr.channel NOT IN ('REDPACKET_GET_PAY', 'PROXY_PAY')
+          AND cr.create_time BETWEEN #{startTime} AND #{endTime}
+          AND u.region_id = #{query.regionId}
+        <if test="query.country != null and query.country != ''">
+            AND u.country = #{query.country}
+        </if>
+        <if test="query.channel != null and query.channel != ''">
+            AND u.app = #{query.channel}
+        </if>
+        GROUP BY u.country
+        ORDER BY amount DESC
+        LIMIT 8
+    </select>
+
+    <select id="selectCountries" resultType="java.lang.String">
+        SELECT DISTINCT country
+        FROM `user`
+        WHERE region_id = #{regionId}
+          AND country IS NOT NULL AND country != ''
+        ORDER BY country
+    </select>
+
+    <select id="selectChannels" resultType="java.lang.String">
+        SELECT DISTINCT app
+        FROM `user`
+        WHERE region_id = #{regionId}
+          AND app IS NOT NULL AND app != ''
+        ORDER BY app
+    </select>
+</mapper>

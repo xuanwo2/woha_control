@@ -1,0 +1,43 @@
+# IDEA 本地项目配置
+.idea/
+
+# 独立 iChat 工程不纳入当前仓库提交
+#woha_admin/
+
+# 本地 Agent 协作说明
+AGENTS.md
+
+# 子工程构建产物与本地开发文件
+**/.gradle/
+**/build/
+**/target/
+**/bin/
+**/dist/
+**/node_modules/
+**/.idea/
+**/.vscode/
+**/.apt_generated/
+**/.settings/
+**/nbproject/private/
+**/nbbuild/
+**/nbdist/
+**/.nb-gradle/
+*.iws
+*.iml
+*.ipr
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.local
+*.log
+*.xml.versionsBackup
+*.swp
+rebel.xml
+.DS_Store
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+selenium-debug.log
+woha-web/package-lock.json
+woha-web/yarn.lock

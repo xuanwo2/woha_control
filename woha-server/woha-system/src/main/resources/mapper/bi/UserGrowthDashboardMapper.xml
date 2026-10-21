@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.woha.business.bi.mapper.UserGrowthDashboardMapper">
+
+    <sql id="accountDimensionCondition">
+        AND a.region_id = #{query.regionId}
+        <if test="query.country != null and query.country != ''">
+            AND a.country = #{query.country}
+        </if>
+        <if test="query.channel != null and query.channel != ''">
+            AND a.channel = #{query.channel}
+        </if>
+        <if test="query.os != null and query.os != ''">
+            AND a.os = #{query.os}
+        </if>
+    </sql>
+
+    <sql id="trackingDimensionCondition">
+        AND tr.region_id = #{query.regionId}
+        <if test="query.country != null and query.country != ''">
+            AND JSON_UNQUOTE(JSON_EXTRACT(tr.common_params_json, '$.country')) = #{query.country}
+        </if>
+        <if test="query.channel != null and query.channel != ''">
+            AND tr.channel = #{query.channel}
+        </if>
+        <if test="query.os != null and query.os != ''">
+            AND tr.os = #{query.os}
+        </if>
+    </sql>
+
+    <!-- 曝光与提交读取客户端埋点，注册成功读取账号表，完善资料以用户表存在记录为准 -->
+    <select id="selectFunnel" resultType="java.util.Map">
+        SELECT
+            (SELECT COUNT(DISTINCT COALESCE(
+                        IF(tr.uid IS NULL, NULL, CONCAT('uid:', tr.uid)),
+                        IF(NULLIF(tr.device_id, '') IS NULL, NULL, CONCAT('device:', tr.device_id)),
+                        IF(NULLIF(tr.session_id, '') IS NULL, NULL, CONCAT('session:', tr.session_id)),
+                        CONCAT('event:', tr.event_uuid)))
+             FROM tracking_event_record tr
+             WHERE tr.event_name = 'account_register_page_exposure'
+               AND tr.server_time BETWEEN #{startTime} AND #{endTime}
+             <include refid="trackingDimensionCondition" />) AS exposureUsers,
+            (SELECT COUNT(DISTINCT COALESCE(
+                        IF(tr.uid IS NULL, NULL, CONCAT('uid:', tr.uid)),
+                        IF(NULLIF(tr.device_id, '') IS NULL, NULL, CONCAT('device:', tr.device_id)),
+                        IF(NULLIF(tr.session_id, '') IS NULL, NULL, CONCAT('session:', tr.session_id)),
+                        CONCAT('event:', tr.event_uuid)))
+             FROM tracking_event_record tr
+             WHERE tr.event_name = 'account_register_submit'
+               AND tr.server_time BETWEEN #{startTime} AND #{endTime}
+             <include refid="trackingDimensionCondition" />) AS submitUsers,
+            (SELECT COUNT(DISTINCT a.uid)
+             FROM account a
+             WHERE a.register_time BETWEEN #{startTime} AND #{endTime}
+             <include refid="accountDimensionCondition" />) AS successUsers,
+            (SELECT COUNT(DISTINCT a.uid)
+             FROM account a
+             JOIN user u ON u.uid = a.uid AND u.region_id = a.region_id
+             WHERE a.register_time BETWEEN #{startTime} AND #{endTime}
+             <include refid="accountDimensionCondition" />) AS completedUsers
+    </select>
+
+    <select id="selectCohortSizes" resultType="java.util.Map">
+        SELECT DATE_FORMAT(a.register_time, '%Y-%m-%d') AS registerDate,
+               COUNT(DISTINCT a.uid) AS registeredUsers
+        FROM account a
+        WHERE a.register_time BETWEEN #{startTime} AND #{endTime}
+        <include refid="accountDimensionCondition" />
+        GROUP BY DATE_FORMAT(a.register_time, '%Y-%m-%d')
+        ORDER BY registerDate
+    </select>
+
+    <select id="selectRetention" resultType="java.util.Map">
+        SELECT DATE_FORMAT(a.register_time, '%Y-%m-%d') AS registerDate,
+               DATEDIFF(DATE(alr.create_time), DATE(a.register_time)) AS dayOffset,
+               COUNT(DISTINCT a.uid) AS retainedUsers
+        FROM account a
+        JOIN account_login_record alr ON alr.uid = a.uid AND alr.region_id = a.region_id
+        WHERE a.register_time BETWEEN #{startTime} AND #{endTime}
+          AND alr.create_time &gt;= DATE(a.register_time)
+          AND alr.create_time &lt;= #{retentionEndTime}
+          AND DATEDIFF(DATE(alr.create_time), DATE(a.register_time)) BETWEEN 0 AND 30
+        <include refid="accountDimensionCondition" />
+        GROUP BY DATE_FORMAT(a.register_time, '%Y-%m-%d'),
+                 DATEDIFF(DATE(alr.create_time), DATE(a.register_time))
+        ORDER BY registerDate, dayOffset
+    </select>
+
+    <!-- 登录类型固定值：2 Google、3 Facebook、4 Apple、6 Line、9 TikTok -->
+    <select id="selectLoginSummary" resultType="java.util.Map">
+        SELECT
+            (SELECT COUNT(0)
+             FROM account_login_record alr
+             JOIN account a ON a.uid = alr.uid AND a.region_id = alr.region_id
+             WHERE alr.create_time BETWEEN #{startTime} AND #{endTime}
+             <include refid="accountDimensionCondition" />) AS loginSuccesses,
+            (SELECT COUNT(0)
+             FROM account_login_record alr
+             JOIN account a ON a.uid = alr.uid AND a.region_id = alr.region_id
+             WHERE alr.create_time BETWEEN #{startTime} AND #{endTime}
+               AND alr.login_type IN (2, 3, 4, 6, 9)
+             <include refid="accountDimensionCondition" />) AS thirdLoginSuccesses
+    </select>
+
+    <select id="selectThirdLoginChannels" resultType="java.util.Map">
+        SELECT CASE alr.login_type
+                   WHEN 2 THEN 'Google'
+                   WHEN 3 THEN 'Facebook'
+                   WHEN 4 THEN 'Apple'
+                   WHEN 6 THEN 'Line'
+                   WHEN 9 THEN 'TikTok'
+                   ELSE '其他'
+               END AS channelName,
+               COUNT(0) AS loginCount
+        FROM account_login_record alr
+        JOIN account a ON a.uid = alr.uid AND a.region_id = alr.region_id
+        WHERE alr.create_time BETWEEN #{startTime} AND #{endTime}
+          AND alr.login_type IN (2, 3, 4, 6, 9)
+        <include refid="accountDimensionCondition" />
+        GROUP BY alr.login_type
+        ORDER BY loginCount DESC
+    </select>
+
+    <select id="selectCountries" resultType="java.lang.String">
+        SELECT DISTINCT country
+        FROM account
+        WHERE region_id = #{regionId}
+          AND country IS NOT NULL AND country != ''
+        ORDER BY country
+    </select>
+
+    <select id="selectChannels" resultType="java.lang.String">
+        SELECT DISTINCT channel
+        FROM account
+        WHERE region_id = #{regionId}
+          AND channel IS NOT NULL AND channel != ''
+        ORDER BY channel
+    </select>
+
+    <select id="selectOperatingSystems" resultType="java.lang.String">
+        SELECT DISTINCT os
+        FROM account
+        WHERE region_id = #{regionId}
+          AND os IS NOT NULL AND os != ''
+        ORDER BY os
+    </select>
+</mapper>
