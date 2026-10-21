@@ -5,8 +5,7 @@ import ${import};
 #end
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
-import com.woha.business.common.annotation.Excel;
-import com.woha.business.common.core.domain.BaseEntity;
+import com.woha.control.common.annotation.Excel;
 
 /**
  * ${subTable.functionName}对象 ${subTableName}

@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>woha</artifactId>
-        <groupId>com.woha.business</groupId>
+        <groupId>com.woha.control</groupId>
         <version>3.9.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -44,19 +44,19 @@
 
         <!-- 核心模块-->
         <dependency>
-            <groupId>com.woha.business</groupId>
+            <groupId>com.woha.control</groupId>
             <artifactId>woha-framework</artifactId>
         </dependency>
 
         <!-- 定时任务-->
         <dependency>
-            <groupId>com.woha.business</groupId>
+            <groupId>com.woha.control</groupId>
             <artifactId>woha-quartz</artifactId>
         </dependency>
 
         <!-- 代码生成-->
         <dependency>
-            <groupId>com.woha.business</groupId>
+            <groupId>com.woha.control</groupId>
             <artifactId>woha-generator</artifactId>
         </dependency>
 

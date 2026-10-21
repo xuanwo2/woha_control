@@ -4,13 +4,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	
-    <groupId>com.woha.business</groupId>
+    <groupId>com.woha.control</groupId>
     <artifactId>woha</artifactId>
     <version>3.9.1</version>
 
     <name>woha</name>
     <url>http://www.ruoyi.vip</url>
-    <description>BI后台</description>
+    <description>外管后台</description>
     
     <properties>
         <woha.version>3.9.1</woha.version>
@@ -160,35 +160,35 @@
 
             <!-- 定时任务-->
             <dependency>
-                <groupId>com.woha.business</groupId>
+                <groupId>com.woha.control</groupId>
                 <artifactId>woha-quartz</artifactId>
                 <version>${woha.version}</version>
             </dependency>
 
             <!-- 代码生成-->
             <dependency>
-                <groupId>com.woha.business</groupId>
+                <groupId>com.woha.control</groupId>
                 <artifactId>woha-generator</artifactId>
                 <version>${woha.version}</version>
             </dependency>
 
             <!-- 核心模块-->
             <dependency>
-                <groupId>com.woha.business</groupId>
+                <groupId>com.woha.control</groupId>
                 <artifactId>woha-framework</artifactId>
                 <version>${woha.version}</version>
             </dependency>
 
             <!-- 系统模块-->
             <dependency>
-                <groupId>com.woha.business</groupId>
+                <groupId>com.woha.control</groupId>
                 <artifactId>woha-system</artifactId>
                 <version>${woha.version}</version>
             </dependency>
 
             <!-- 通用工具-->
             <dependency>
-                <groupId>com.woha.business</groupId>
+                <groupId>com.woha.control</groupId>
                 <artifactId>woha-common</artifactId>
                 <version>${woha.version}</version>
             </dependency>
