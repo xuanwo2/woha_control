@@ -55,10 +55,25 @@ export const constantRoutes = [
   {
     path: '/external',
     component: () => import('@/views/external/Layout.vue'),
-    redirect: '/external/accounts',
+    redirect: '/external/workbench',
     children: [
+      { path: 'workbench', component: () => import('@/views/external/Workbench.vue') },
+      { path: 'team', component: () => import('@/views/external/Team.vue') },
+      { path: 'guild', component: () => import('@/views/external/Placeholder.vue') },
+      { path: 'guild-flow', component: () => import('@/views/external/Placeholder.vue') },
+      { path: 'gift', component: () => import('@/views/external/Placeholder.vue') },
+      { path: 'chat-no', component: () => import('@/views/external/Placeholder.vue') },
+      { path: 'account-ban', component: () => import('@/views/external/Placeholder.vue') },
+      { path: 'export', component: () => import('@/views/external/Placeholder.vue') },
       { path: 'accounts', component: () => import('@/views/external/Account.vue') },
       { path: 'role-permissions', component: () => import('@/views/external/RolePermission.vue') }
+    ]
+  },
+  {
+    path: '/external-workbench',
+    component: () => import('@/views/external/Layout.vue'),
+    children: [
+      { path: '', component: () => import('@/views/external/Workbench.vue') }
     ]
   },
   {

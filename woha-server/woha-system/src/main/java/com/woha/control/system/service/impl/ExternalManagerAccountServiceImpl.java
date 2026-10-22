@@ -2,6 +2,7 @@ package com.woha.control.system.service.impl;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.security.SecureRandom;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,6 +18,7 @@ import com.woha.control.system.domain.external.ExternalManagerRolePermission;
 import com.woha.control.system.domain.external.ExternalManagerRolePermissionRequest;
 import com.woha.control.system.domain.external.ExternalManagerSaveRequest;
 import com.woha.control.system.domain.external.ExternalWohaUser;
+import com.woha.control.system.domain.external.ExternalSubordinateCreateRequest;
 import com.woha.control.system.mapper.ExternalManagerAccountMapper;
 import com.woha.control.system.mapper.ExternalManagerRolePermissionMapper;
 import com.woha.control.system.service.IExternalManagerAccountService;
@@ -32,6 +34,7 @@ public class ExternalManagerAccountServiceImpl implements IExternalManagerAccoun
 {
     private static final int LOGIN_MAX_FAILURE_COUNT = 5;
     private static final long LOGIN_LOCK_MILLIS = 7L * 24 * 60 * 60 * 1000;
+    private static final String PASSWORD_CHARACTERS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
 
     private final ExternalManagerAccountMapper accountMapper;
     private final ExternalManagerRolePermissionMapper rolePermissionMapper;
@@ -83,6 +86,29 @@ public class ExternalManagerAccountServiceImpl implements IExternalManagerAccoun
         }
         account.setPassword(passwordEncoder.encode(request.getPassword()));
         accountMapper.insertAccount(account);
+    }
+
+    /** 创建当前外管账号的下级并返回初始密码 */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String createSubordinate(ExternalManagerAccount parent, ExternalSubordinateCreateRequest request)
+    {
+        if (!parent.getPermissions().contains(ExternalManagerPermission.CREATE_SUBORDINATE.name())) throw new ServiceException("当前账号没有新增下级权限");
+        if (ExternalManagerRole.BD.name().equals(parent.getRoleCode())) throw new ServiceException("BD不能新增下级");
+        if (ExternalManagerRole.BD_LEADER.name().equals(parent.getRoleCode()) && !ExternalManagerRole.BD.name().equals(request.getRoleCode())) throw new ServiceException("BD Leader只能新增BD");
+        if (ExternalManagerRole.SUPER_ADMIN.name().equals(parent.getRoleCode()) && !ExternalManagerRole.BD.name().equals(request.getRoleCode()) && !ExternalManagerRole.BD_LEADER.name().equals(request.getRoleCode())) throw new ServiceException("Super Admin只能新增BD Leader或BD");
+        ExternalManagerSaveRequest save = new ExternalManagerSaveRequest();
+        save.setLoginName(request.getLoginName()); save.setRealName(request.getRealName()); save.setWohaChatNo(request.getWohaChatNo()); save.setRoleCode(request.getRoleCode()); save.setParentId(parent.getId()); save.setRegionId(parent.getRegionId()); save.setWhatsapp(request.getWhatsapp()); save.setRemark(request.getRemark());
+        String password = generateInitialPassword(); save.setPassword(password); createAccount(save, parent.getLoginName(), parent.getLoginName() + " 新增");
+        return password;
+    }
+
+    /** 生成仅用于首次登录的随机密码 */
+    private String generateInitialPassword()
+    {
+        SecureRandom random = new SecureRandom(); StringBuilder value = new StringBuilder("Aa1");
+        for (int i = 0; i < 9; i++) value.append(PASSWORD_CHARACTERS.charAt(random.nextInt(PASSWORD_CHARACTERS.length())));
+        return value.toString();
     }
 
     /** 修改外管账号 */

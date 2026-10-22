@@ -1,6 +1,7 @@
 package com.woha.control.system.mapper;
 
 import java.util.List;
+import java.util.Collection;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import com.woha.control.system.domain.external.ExternalManagerAccount;
@@ -18,6 +19,13 @@ public interface ExternalManagerAccountMapper
             @Param("wohaUid") Long wohaUid, @Param("roleCode") String roleCode,
             @Param("regionId") Integer regionId, @Param("status") String status,
             @Param("parentLoginName") String parentLoginName, @Param("openMethod") String openMethod);
+
+    /** 查询指定大区的外管账号摘要 */
+    List<ExternalManagerAccount> selectAccountSummariesByRegion(@Param("regionId") Integer regionId);
+
+    /** 按可见账号范围查询团队成员 */
+    List<ExternalManagerAccount> selectTeamAccountList(@Param("ids") Collection<Long> ids,
+            @Param("loginName") String loginName, @Param("roleCode") String roleCode, @Param("status") String status);
 
     /** 根据主键查询外管账号 */
     ExternalManagerAccount selectAccountById(@Param("id") Long id);

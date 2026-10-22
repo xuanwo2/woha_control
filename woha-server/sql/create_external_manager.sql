@@ -10,6 +10,8 @@ CREATE TABLE `external_manager_account` (
     `region_id` INT NOT NULL COMMENT '所属大区编号',
     `permissions` VARCHAR(500) NOT NULL DEFAULT '' COMMENT '功能权限编码，逗号分隔',
     `open_method` VARCHAR(50) NOT NULL DEFAULT '运营开通' COMMENT '开通方式',
+    `whatsapp` VARCHAR(32) NOT NULL DEFAULT '' COMMENT 'WhatsApp账号',
+    `remark` VARCHAR(255) NOT NULL DEFAULT '' COMMENT '说明',
     `status` CHAR(1) NOT NULL DEFAULT '0' COMMENT '账号状态，0正常，1停用',
     `del_flag` CHAR(1) NOT NULL DEFAULT '0' COMMENT '删除标志，0存在，2删除',
     `login_fail_count` INT NOT NULL DEFAULT 0 COMMENT '连续登录失败次数',

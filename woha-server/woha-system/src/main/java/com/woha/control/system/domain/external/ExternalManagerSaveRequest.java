@@ -34,4 +34,8 @@ public class ExternalManagerSaveRequest
     private Integer regionId;
     /** 功能权限编码集合 */
     private List<String> permissions;
+    /** WhatsApp账号 */
+    private String whatsapp;
+    /** 说明 */
+    private String remark;
 }

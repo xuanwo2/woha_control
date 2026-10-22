@@ -31,6 +31,10 @@ public class ExternalManagerAccount
     private String permissions;
     /** 开通方式 */
     private String openMethod;
+    /** WhatsApp账号 */
+    private String whatsapp;
+    /** 说明 */
+    private String remark;
     /** 账号状态，0正常，1停用 */
     private String status;
     /** 删除标志，0存在，2删除 */
@@ -59,4 +63,8 @@ public class ExternalManagerAccount
     private Long wohaChatNo;
     /** 上级外管账号 */
     private String parentLoginName;
+    /** 团队公会数 */
+    private Integer guildCount;
+    /** 本月流水 */
+    private Long monthFlow;
 }

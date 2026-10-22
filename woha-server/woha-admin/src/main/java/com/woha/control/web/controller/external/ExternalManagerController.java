@@ -34,6 +34,9 @@ import com.woha.control.system.domain.external.ExternalManagerRolePermissionRequ
 import com.woha.control.system.domain.external.ExternalManagerSaveRequest;
 import com.woha.control.system.domain.external.ExternalPasswordChangeRequest;
 import com.woha.control.system.domain.external.ExternalWohaUser;
+import com.woha.control.system.domain.external.ExternalSubordinateCreateRequest;
+import com.woha.control.system.domain.external.ExternalTeamMetric;
+import com.woha.control.system.service.IExternalManagerTeamService;
 import com.woha.control.system.service.IExternalManagerAccountService;
 import com.woha.control.system.service.IExternalWohaUserService;
 
@@ -49,13 +52,15 @@ public class ExternalManagerController extends BaseController
     private final IExternalManagerAccountService accountService;
     private final IExternalWohaUserService wohaUserService;
     private final ExternalTokenService externalTokenService;
+    private final IExternalManagerTeamService teamService;
 
     public ExternalManagerController(IExternalManagerAccountService accountService,
-            IExternalWohaUserService wohaUserService, ExternalTokenService externalTokenService)
+            IExternalWohaUserService wohaUserService, ExternalTokenService externalTokenService, IExternalManagerTeamService teamService)
     {
         this.accountService = accountService;
         this.wohaUserService = wohaUserService;
         this.externalTokenService = externalTokenService;
+        this.teamService = teamService;
     }
 
     /** 外管账号登录 */
@@ -88,13 +93,51 @@ public class ExternalManagerController extends BaseController
         return AjaxResult.success(account);
     }
 
+    /** 查询外管工作台 */
+    @GetMapping("/workbench")
+    public AjaxResult workbench()
+    {
+        ExternalManagerAccount current = accountService.selectAccountById(currentAccountId());
+        List<ExternalManagerAccount> accounts = teamService.selectTeamMembers(teamService.resolveVisibleAccountIds(current), null, null, null);
+        Map<Long, ExternalTeamMetric> metrics = teamService.selectMetrics(accounts).stream().collect(Collectors.toMap(ExternalTeamMetric::getWohaUid, Function.identity()));
+        long guildCount = metrics.values().stream().mapToLong(item -> item.getGuildCount() == null ? 0 : item.getGuildCount()).sum();
+        long dayFlow = metrics.values().stream().mapToLong(item -> item.getDayFlow() == null ? 0 : item.getDayFlow()).sum();
+        long weekFlow = metrics.values().stream().mapToLong(item -> item.getWeekFlow() == null ? 0 : item.getWeekFlow()).sum();
+        long monthFlow = metrics.values().stream().mapToLong(item -> item.getMonthFlow() == null ? 0 : item.getMonthFlow()).sum();
+        long totalFlow = metrics.values().stream().mapToLong(item -> item.getTotalFlow() == null ? 0 : item.getTotalFlow()).sum();
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("bdLeaderCount", accounts.stream().filter(item -> "BD_LEADER".equals(item.getRoleCode())).count()); result.put("bdCount", accounts.stream().filter(item -> "BD".equals(item.getRoleCode())).count()); result.put("guildCount", guildCount); result.put("anchorCount", 0); result.put("dayFlow", dayFlow); result.put("weekFlow", weekFlow); result.put("monthFlow", monthFlow); result.put("totalFlow", totalFlow);
+        return AjaxResult.success(result);
+    }
+
+    /** 分页查询当前外管可见团队成员 */
+    @GetMapping("/team/members")
+    public TableDataInfo teamMembers(@RequestParam(required = false) String loginName, @RequestParam(required = false) String roleCode, @RequestParam(required = false) String status)
+    {
+        ExternalManagerAccount current = accountService.selectAccountById(currentAccountId()); List<Long> ids = teamService.resolveVisibleAccountIds(current);
+        startPage(); List<ExternalManagerAccount> list = teamService.selectTeamMembers(ids, loginName, roleCode, status); enrichWohaUsers(list);
+        Map<Long, ExternalTeamMetric> metrics = teamService.selectMetrics(list).stream().collect(Collectors.toMap(ExternalTeamMetric::getWohaUid, Function.identity()));
+        list.forEach(item -> { ExternalTeamMetric metric = metrics.get(item.getWohaUid()); if (metric != null) { item.setGuildCount(metric.getGuildCount()); item.setMonthFlow(metric.getMonthFlow()); } item.setPassword(null); });
+        return getDataTable(list);
+    }
+
+    /** 新增当前外管账号下级 */
+    @PostMapping("/team/subordinates")
+    public AjaxResult addSubordinate(@Valid @RequestBody ExternalSubordinateCreateRequest request)
+    {
+        String password = accountService.createSubordinate(accountService.selectAccountById(currentAccountId()), request); AjaxResult result = AjaxResult.success(); result.put("initialPassword", password); return result;
+    }
+
     /** 修改当前外管账号密码 */
     @PutMapping("/auth/password")
     public AjaxResult changePassword(@Valid @RequestBody ExternalPasswordChangeRequest request, HttpServletRequest httpRequest)
     {
-        Long accountId = currentAccountId();
-        accountService.changePassword(accountId, request.getOldPassword(), request.getNewPassword());
-        externalTokenService.invalidateAccountTokens(accountId);
+        List<ExternalManagerAccount> accounts = accountService.selectAccountList(currentLoginName(), null, null, null, null, null, null);
+        if (accounts.isEmpty())
+        {
+            throw new ServiceException("外管账号不存在");
+        }
+        accountService.changePassword(accounts.get(0).getId(), request.getOldPassword(), request.getNewPassword());
         return AjaxResult.success();
     }
 
@@ -206,7 +249,13 @@ public class ExternalManagerController extends BaseController
         {
             throw new ServiceException("外管登录状态无效");
         }
-        return ((ExternalLoginUser) authentication.getPrincipal()).getAccountId();
+        ExternalLoginUser loginUser = (ExternalLoginUser) authentication.getPrincipal();
+        List<ExternalManagerAccount> accounts = accountService.selectAccountList(loginUser.getLoginName(), null, null, null, null, null, null);
+        if (accounts.isEmpty())
+        {
+            throw new ServiceException("外管账号不存在");
+        }
+        return accounts.get(0).getId();
     }
 
     /** 获取当前外管登录账号 */

@@ -4,6 +4,7 @@ import java.util.List;
 import com.woha.control.system.domain.external.ExternalManagerAccount;
 import com.woha.control.system.domain.external.ExternalManagerRolePermissionRequest;
 import com.woha.control.system.domain.external.ExternalManagerSaveRequest;
+import com.woha.control.system.domain.external.ExternalSubordinateCreateRequest;
 
 /**
  * 外管账号服务
@@ -21,6 +22,9 @@ public interface IExternalManagerAccountService
 
     /** 新增外管账号 */
     void createAccount(ExternalManagerSaveRequest request, String operator, String openMethod);
+
+    /** 新增下级并返回初始密码 */
+    String createSubordinate(ExternalManagerAccount parent, ExternalSubordinateCreateRequest request);
 
     /** 修改外管账号 */
     void updateAccount(Long id, ExternalManagerSaveRequest request, String operator);

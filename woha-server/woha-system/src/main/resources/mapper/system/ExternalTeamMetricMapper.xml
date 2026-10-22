@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.woha.control.system.mapper.ExternalTeamMetricMapper">
+    <select id="selectMetricsByWohaUids" resultType="ExternalTeamMetric">
+        select bd.uid as woha_uid, count(distinct relation.family_id) as guild_count,
+        coalesce(sum(case when stat.count_day = curdate() then stat.gold_num + stat.luck_gold_num else 0 end), 0) as day_flow,
+        coalesce(sum(case when stat.count_day &gt;= date_sub(curdate(), interval weekday(curdate()) day) then stat.gold_num + stat.luck_gold_num else 0 end), 0) as week_flow,
+        coalesce(sum(case when date_format(stat.count_day, '%Y-%m') = date_format(curdate(), '%Y-%m') then stat.gold_num + stat.luck_gold_num else 0 end), 0) as month_flow,
+        coalesce(sum(stat.gold_num + stat.luck_gold_num), 0) as total_flow
+        from bd_user bd
+        left join bd_user_family relation on relation.bd_user_id = bd.bd_user_id
+        left join bd_user_family_day stat on stat.bd_user_family_id = relation.id
+        where bd.uid in <foreach collection="wohaUids" item="uid" open="(" separator="," close=")">#{uid}</foreach>
+        and bd.status &lt;= 1
+        group by bd.uid
+    </select>
+</mapper>

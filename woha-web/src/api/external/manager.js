@@ -26,3 +26,9 @@ export const resetExternalAccountPassword = (id, password) => request({ url: `/e
 export const getExternalRolePermissions = (regionId) => request({ url: '/external/role-permissions', method: 'get', params: { regionId } })
 /** 保存角色默认权限 */
 export const saveExternalRolePermissions = (data) => request({ url: '/external/role-permissions', method: 'put', data })
+/** 查询外管工作台 */
+export const getExternalWorkbench = () => request({ url: '/external/workbench', method: 'get' })
+/** 查询当前外管团队成员 */
+export const listExternalTeamMembers = (params) => request({ url: '/external/team/members', method: 'get', params })
+/** 新增下级 */
+export const addExternalSubordinate = (data) => request({ url: '/external/team/subordinates', method: 'post', data })
