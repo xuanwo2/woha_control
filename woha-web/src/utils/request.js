@@ -7,6 +7,7 @@ import cache from '@/plugins/cache'
 import { saveAs } from 'file-saver'
 import useUserStore from '@/store/modules/user'
 import useRegionStore from '@/store/modules/region'
+import { getExternalToken, removeExternalToken } from '@/utils/externalAuth'
 
 let downloadLoadingInstance;
 // 是否显示重新登录
@@ -32,6 +33,9 @@ service.interceptors.request.use(config => {
   }
   // BI 看板及治理接口统一携带当前区域编号
   const normalizedUrl = String(config.url || '').replace(/^\/+/, '')
+  if (normalizedUrl.startsWith('external/') && getExternalToken()) {
+    config.headers['X-External-Token'] = getExternalToken()
+  }
   if (normalizedUrl.startsWith('bi/')) {
     config.params = { ...(config.params || {}), regionId: useRegionStore().regionId }
   }
@@ -88,6 +92,11 @@ service.interceptors.response.use(res => {
       return res.data
     }
     if (code === 401) {
+      if (String(res.config.url || '').replace(/^\/+/, '').startsWith('external/')) {
+        removeExternalToken()
+        location.href = '/external/login'
+        return Promise.reject('外管登录状态已失效，请重新登录。')
+      }
       if (!isRelogin.show) {
         isRelogin.show = true;
         ElMessageBox.confirm('登录状态已过期，您可以继续留在该页面，或者重新登录', '系统提示', { confirmButtonText: '重新登录', cancelButtonText: '取消', type: 'warning' }).then(() => {

@@ -8,6 +8,7 @@ import { isRelogin } from '@/utils/request'
 import useUserStore from '@/store/modules/user'
 import useSettingsStore from '@/store/modules/settings'
 import usePermissionStore from '@/store/modules/permission'
+import { getExternalToken } from '@/utils/externalAuth'
 
 NProgress.configure({ showSpinner: false });
 
@@ -15,6 +16,17 @@ const whiteList = ['/login', '/register'];
 
 router.beforeEach((to, from, next) => {
   NProgress.start()
+  if (to.path.startsWith('/external/')) {
+    if (to.path === '/external/login') {
+      next(getExternalToken() ? '/external/accounts' : undefined)
+    } else if (getExternalToken()) {
+      next()
+    } else {
+      next(`/external/login?redirect=${to.fullPath}`)
+    }
+    NProgress.done()
+    return
+  }
   if (getToken()) {
     to.meta.title && useSettingsStore().setTitle(to.meta.title)
     /* has token*/

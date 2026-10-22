@@ -16,6 +16,7 @@ import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.web.filter.CorsFilter;
 import com.woha.control.framework.config.properties.PermitAllUrlProperties;
 import com.woha.control.framework.security.filter.JwtAuthenticationTokenFilter;
+import com.woha.control.framework.security.filter.ExternalAuthenticationTokenFilter;
 import com.woha.control.framework.security.handle.AuthenticationEntryPointImpl;
 import com.woha.control.framework.security.handle.LogoutSuccessHandlerImpl;
 
@@ -45,6 +46,10 @@ public class SecurityConfig
      */
     @Autowired
     private JwtAuthenticationTokenFilter authenticationTokenFilter;
+
+    /** 外管令牌认证过滤器 */
+    @Autowired
+    private ExternalAuthenticationTokenFilter externalAuthenticationTokenFilter;
     
     /**
      * 跨域过滤器
@@ -100,7 +105,7 @@ public class SecurityConfig
             .authorizeHttpRequests((requests) -> {
                 permitAllUrl.getUrls().forEach(url -> requests.requestMatchers(url).permitAll());
                 // 对于登录login 注册register 验证码captchaImage 允许匿名访问
-                requests.requestMatchers("/login", "/register", "/captchaImage").permitAll()
+                requests.requestMatchers("/login", "/register", "/captchaImage", "/external/auth/login").permitAll()
                     // 静态资源，可匿名访问
                     .requestMatchers(HttpMethod.GET, "/", "/*.html", "/**.html", "/**.css", "/**.js", "/profile/**").permitAll()
                     .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**", "/druid/**").permitAll()
@@ -111,6 +116,7 @@ public class SecurityConfig
             .logout(logout -> logout.logoutUrl("/logout").logoutSuccessHandler(logoutSuccessHandler))
             // 添加JWT filter
             .addFilterBefore(authenticationTokenFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(externalAuthenticationTokenFilter, JwtAuthenticationTokenFilter.class)
             // 添加CORS filter
             .addFilterBefore(corsFilter, JwtAuthenticationTokenFilter.class)
             .addFilterBefore(corsFilter, LogoutFilter.class)

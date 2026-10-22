@@ -43,6 +43,25 @@ export const constantRoutes = [
     hidden: true
   },
   {
+    path: '/external/login',
+    component: () => import('@/views/external/Login.vue'),
+    hidden: true
+  },
+  {
+    path: '/external/password',
+    component: () => import('@/views/external/Password.vue'),
+    hidden: true
+  },
+  {
+    path: '/external',
+    component: () => import('@/views/external/Layout.vue'),
+    redirect: '/external/accounts',
+    children: [
+      { path: 'accounts', component: () => import('@/views/external/Account.vue') },
+      { path: 'role-permissions', component: () => import('@/views/external/RolePermission.vue') }
+    ]
+  },
+  {
     path: '/register',
     component: () => import('@/views/register'),
     hidden: true
@@ -66,8 +85,9 @@ export const constantRoutes = [
     children: [
       {
         path: '/index',
-        // 兼容原默认首页地址，直接进入后台动态菜单中的平台大盘
-        redirect: '/bi/platform'
+        component: () => import('@/views/index.vue'),
+        name: 'Index',
+        meta: { title: '首页', icon: 'dashboard', affix: true }
       }
     ]
   },
