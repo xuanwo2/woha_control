@@ -40,3 +40,15 @@ export const createExternalGuild = (data) => request({ url: '/external/guild', m
 export const listExternalGuild = (params) => request({ url: '/external/guild/list', method: 'get', params })
 /** 查询公会流水汇总 */
 export const getExternalGuildFlowSummary = (params) => request({ url: '/external/guild/flow-summary', method: 'get', params })
+/** 查询外管礼包 */
+export const listExternalGiftPacks = (params) => request({ url: '/external/gift-packs', method: 'get', params })
+/** 保存外管礼包 */
+export const saveExternalGiftPack = (data) => request({ url: '/external/gift-packs', method: 'post', data })
+/** 查询外管礼包额度 */
+export const listExternalGiftPackQuotas = (params) => request({ url: '/external/gift-packs/quotas', method: 'get', params })
+/** 保存外管礼包额度 */
+export const saveExternalGiftPackQuota = (data) => request({ url: '/external/gift-packs/quotas', method: 'put', data })
+/** 发放外管礼包 */
+export const issueExternalGiftPack = (data) => request({ url: '/external/gift-packs/issue', method: 'post', data })
+/** 查询礼包发放记录 */
+export const listExternalGiftPackIssues = () => request({ url: '/external/gift-packs/issues', method: 'get' })

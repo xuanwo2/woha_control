@@ -44,6 +44,10 @@ import com.woha.control.system.domain.external.ExternalGuildCreateRequest;
 import com.woha.control.system.domain.external.ExternalGuildFlowSummary;
 import com.woha.control.system.domain.external.ExternalGuildQuery;
 import com.woha.control.system.domain.external.ExternalGuildVO;
+import com.woha.control.system.domain.external.ExternalGiftPack;
+import com.woha.control.system.domain.external.ExternalGiftPackIssueRequest;
+import com.woha.control.system.domain.external.ExternalGiftPackQuotaSaveRequest;
+import com.woha.control.system.service.IExternalGiftPackService;
 import com.woha.control.system.service.IExternalGuildService;
 import com.woha.control.system.service.IExternalManagerTeamService;
 import com.woha.control.system.service.IExternalManagerAccountService;
@@ -63,16 +67,77 @@ public class ExternalManagerController extends BaseController
     private final ExternalTokenService externalTokenService;
     private final IExternalManagerTeamService teamService;
     private final IExternalGuildService guildService;
+    private final IExternalGiftPackService giftPackService;
 
     public ExternalManagerController(IExternalManagerAccountService accountService,
             IExternalWohaUserService wohaUserService, ExternalTokenService externalTokenService,
-            IExternalManagerTeamService teamService, IExternalGuildService guildService)
+            IExternalManagerTeamService teamService, IExternalGuildService guildService,
+            IExternalGiftPackService giftPackService)
     {
         this.accountService = accountService;
         this.wohaUserService = wohaUserService;
         this.externalTokenService = externalTokenService;
         this.teamService = teamService;
         this.guildService = guildService;
+        this.giftPackService = giftPackService;
+    }
+
+    /** 查询外管礼包 */
+    @GetMapping("/gift-packs")
+    public AjaxResult giftPackList(@RequestParam(required = false) String status)
+    {
+        return AjaxResult.success(giftPackService.selectGiftPackList(status));
+    }
+
+    /** 保存外管礼包 */
+    @PostMapping("/gift-packs")
+    public AjaxResult saveGiftPack(@Valid @RequestBody ExternalGiftPack giftPack)
+    {
+        ensureSuperAdmin();
+        giftPackService.saveGiftPack(giftPack, currentLoginName());
+        return AjaxResult.success();
+    }
+
+    /** 查询外管账号礼包额度 */
+    @GetMapping("/gift-packs/quotas")
+    public AjaxResult giftPackQuotaList(@RequestParam(required = false) Long accountId,
+            @RequestParam(defaultValue = "false") boolean all)
+    {
+        if (all)
+        {
+            ensureSuperAdmin();
+            return AjaxResult.success(giftPackService.selectQuotaList(null));
+        }
+        Long currentAccountId = currentAccountId();
+        if (accountId != null && !accountId.equals(currentAccountId))
+        {
+            ensureSuperAdmin();
+        }
+        return AjaxResult.success(giftPackService.selectQuotaList(accountId == null ? currentAccountId : accountId));
+    }
+
+    /** 保存外管账号礼包额度 */
+    @PutMapping("/gift-packs/quotas")
+    public AjaxResult saveGiftPackQuota(@Valid @RequestBody ExternalGiftPackQuotaSaveRequest request)
+    {
+        ensureSuperAdmin();
+        giftPackService.saveQuota(request);
+        return AjaxResult.success();
+    }
+
+    /** 赠送外管礼包 */
+    @PostMapping("/gift-packs/issue")
+    public AjaxResult issueGiftPack(@Valid @RequestBody ExternalGiftPackIssueRequest request)
+    {
+        giftPackService.issueGiftPack(accountService.selectAccountById(currentAccountId()), request);
+        return AjaxResult.success();
+    }
+
+    /** 查询当前外管账号的礼包赠送记录 */
+    @GetMapping("/gift-packs/issues")
+    public AjaxResult giftPackIssueList()
+    {
+        return AjaxResult.success(giftPackService.selectIssueList(currentAccountId()));
     }
 
     /** 外管账号登录 */
@@ -367,6 +432,15 @@ public class ExternalManagerController extends BaseController
             throw new ServiceException("外管账号不存在");
         }
         return accounts.get(0).getId();
+    }
+
+    /** 校验当前外管账号为超级管理员 */
+    private void ensureSuperAdmin()
+    {
+        if (!"SUPER_ADMIN".equals(accountService.selectAccountById(currentAccountId()).getRoleCode()))
+        {
+            throw new ServiceException("仅 Super Admin 可以配置外管礼包和额度");
+        }
     }
 
     /** 获取当前外管登录账号 */
