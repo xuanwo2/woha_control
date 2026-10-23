@@ -60,3 +60,19 @@ CREATE TABLE `external_gift_pack_issue` (
 INSERT IGNORE INTO sys_menu VALUES
 ('2003', '外管礼包', '0', '7', 'external-gift-pack', 'external/GiftPack', '', '', 1, 0, 'C', '0', '0', 'external:giftPack:list', 'external-gift-pack', 'admin', sysdate(), '', null, '外管礼包一级菜单');
 INSERT IGNORE INTO sys_role_menu (role_id, menu_id) VALUES (1, 2003);
+
+CREATE TABLE `external_chat_no_pool` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '靓号池主键',
+    `chat_no` BIGINT NOT NULL COMMENT '靓号',
+    `account_id` BIGINT NOT NULL COMMENT '归属外管账号主键',
+    `receiver_uid` BIGINT DEFAULT NULL COMMENT '分配用户UID',
+    `previous_chat_no` BIGINT DEFAULT NULL COMMENT '分配前用户账号',
+    `expire_time` DATETIME DEFAULT NULL COMMENT '靓号到期时间',
+    `status` CHAR(1) NOT NULL DEFAULT '0' COMMENT '状态：0可用，1已分配',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uk_external_chat_no_pool_chat_no` (`chat_no`),
+    KEY `idx_external_chat_no_pool_account_status` (`account_id`, `status`),
+    KEY `idx_external_chat_no_pool_expire_time` (`expire_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='外管靓号池';

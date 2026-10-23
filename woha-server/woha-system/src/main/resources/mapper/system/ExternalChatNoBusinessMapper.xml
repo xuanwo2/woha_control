@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.woha.control.system.mapper.ExternalChatNoBusinessMapper">
+    <select id="selectUserForUpdate" resultType="ExternalWohaUser">
+        select uid, chat_no, region_id from `user` where chat_no = #{chatNo} limit 1 for update
+    </select>
+    <select id="selectActiveCuteNoRecordForUpdate" resultType="long">
+        select id from account_cute_no_record where uid = #{uid} and type = 0 and deleted = 0 limit 1 for update
+    </select>
+    <select id="countChatNoInUse" resultType="int">
+        select (select count(1) from `user` where chat_no = #{chatNo})
+             + (select count(1) from account where chat_no = #{chatNo})
+    </select>
+    <update id="updateUserChatNo">update `user` set chat_no = #{chatNo} where uid = #{uid}</update>
+    <update id="updateAccountChatNo">update account set chat_no = #{chatNo} where uid = #{uid}</update>
+    <insert id="insertCuteNoRecord">
+        insert into account_cute_no_record(uid, previous_no, cute_no, type, deleted, delete_by, create_by, create_time, update_by, update_time, expire_time, region_id)
+        values(#{uid}, #{previousNo}, #{cuteNo}, 0, 0, 0, 0, now(), 0, now(), date_add(now(), interval #{dayNum} day), #{regionId})
+    </insert>
+</mapper>

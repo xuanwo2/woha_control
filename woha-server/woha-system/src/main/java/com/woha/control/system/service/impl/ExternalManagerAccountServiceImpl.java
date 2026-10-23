@@ -17,10 +17,13 @@ import com.woha.control.system.domain.external.ExternalManagerRole;
 import com.woha.control.system.domain.external.ExternalManagerRolePermission;
 import com.woha.control.system.domain.external.ExternalManagerRolePermissionRequest;
 import com.woha.control.system.domain.external.ExternalManagerSaveRequest;
+import com.woha.control.system.domain.external.ExternalGiftPackQuota;
+import com.woha.control.system.domain.external.ExternalGiftPackQuotaSaveRequest;
 import com.woha.control.system.domain.external.ExternalWohaUser;
 import com.woha.control.system.domain.external.ExternalSubordinateCreateRequest;
 import com.woha.control.system.mapper.ExternalManagerAccountMapper;
 import com.woha.control.system.mapper.ExternalManagerRolePermissionMapper;
+import com.woha.control.system.mapper.ExternalGiftPackMapper;
 import com.woha.control.system.service.IExternalManagerAccountService;
 import com.woha.control.system.service.IExternalWohaUserService;
 
@@ -40,15 +43,17 @@ public class ExternalManagerAccountServiceImpl implements IExternalManagerAccoun
     private final ExternalManagerRolePermissionMapper rolePermissionMapper;
     private final IExternalWohaUserService wohaUserService;
     private final PasswordEncoder passwordEncoder;
+    private final ExternalGiftPackMapper giftPackMapper;
 
     public ExternalManagerAccountServiceImpl(ExternalManagerAccountMapper accountMapper,
             ExternalManagerRolePermissionMapper rolePermissionMapper, IExternalWohaUserService wohaUserService,
-            PasswordEncoder passwordEncoder)
+            PasswordEncoder passwordEncoder, ExternalGiftPackMapper giftPackMapper)
     {
         this.accountMapper = accountMapper;
         this.rolePermissionMapper = rolePermissionMapper;
         this.wohaUserService = wohaUserService;
         this.passwordEncoder = passwordEncoder;
+        this.giftPackMapper = giftPackMapper;
     }
 
     /** 查询外管账号列表 */
@@ -86,6 +91,7 @@ public class ExternalManagerAccountServiceImpl implements IExternalManagerAccoun
         }
         account.setPassword(passwordEncoder.encode(request.getPassword()));
         accountMapper.insertAccount(account);
+        saveGiftQuotas(account.getId(), request.getGiftQuotas());
     }
 
     /** 创建当前外管账号的下级并返回初始密码 */
@@ -132,6 +138,7 @@ public class ExternalManagerAccountServiceImpl implements IExternalManagerAccoun
         }
         account.setLoginName(existing.getLoginName());
         accountMapper.updateAccount(account);
+        saveGiftQuotas(id, request.getGiftQuotas());
     }
 
     /** 修改外管账号状态 */
@@ -298,6 +305,24 @@ public class ExternalManagerAccountServiceImpl implements IExternalManagerAccoun
         account.setCreateBy(operator);
         account.setUpdateBy(operator);
         return account;
+    }
+
+    /** 保存外管账号的礼包可赠次数 */
+    private void saveGiftQuotas(Long accountId, List<ExternalGiftPackQuotaSaveRequest> quotas)
+    {
+        if (quotas == null) return;
+        for (ExternalGiftPackQuotaSaveRequest request : quotas)
+        {
+            if (request.getGiftId() == null || request.getQuotaCount() == null || request.getQuotaCount() < 0)
+            {
+                throw new ServiceException("礼包额度配置不合法");
+            }
+            ExternalGiftPackQuota quota = new ExternalGiftPackQuota();
+            quota.setAccountId(accountId);
+            quota.setGiftId(request.getGiftId());
+            quota.setQuotaCount(request.getQuotaCount());
+            giftPackMapper.saveQuota(quota);
+        }
     }
 
     /** 校验角色和上级关系 */

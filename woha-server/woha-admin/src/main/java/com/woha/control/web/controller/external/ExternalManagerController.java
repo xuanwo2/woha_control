@@ -47,7 +47,10 @@ import com.woha.control.system.domain.external.ExternalGuildVO;
 import com.woha.control.system.domain.external.ExternalGiftPack;
 import com.woha.control.system.domain.external.ExternalGiftPackIssueRequest;
 import com.woha.control.system.domain.external.ExternalGiftPackQuotaSaveRequest;
+import com.woha.control.system.domain.external.ExternalChatNoAssignRequest;
+import com.woha.control.system.domain.external.ExternalChatNoPoolSaveRequest;
 import com.woha.control.system.service.IExternalGiftPackService;
+import com.woha.control.system.service.IExternalChatNoService;
 import com.woha.control.system.service.IExternalGuildService;
 import com.woha.control.system.service.IExternalManagerTeamService;
 import com.woha.control.system.service.IExternalManagerAccountService;
@@ -68,11 +71,12 @@ public class ExternalManagerController extends BaseController
     private final IExternalManagerTeamService teamService;
     private final IExternalGuildService guildService;
     private final IExternalGiftPackService giftPackService;
+    private final IExternalChatNoService chatNoService;
 
     public ExternalManagerController(IExternalManagerAccountService accountService,
             IExternalWohaUserService wohaUserService, ExternalTokenService externalTokenService,
             IExternalManagerTeamService teamService, IExternalGuildService guildService,
-            IExternalGiftPackService giftPackService)
+            IExternalGiftPackService giftPackService, IExternalChatNoService chatNoService)
     {
         this.accountService = accountService;
         this.wohaUserService = wohaUserService;
@@ -80,6 +84,7 @@ public class ExternalManagerController extends BaseController
         this.teamService = teamService;
         this.guildService = guildService;
         this.giftPackService = giftPackService;
+        this.chatNoService = chatNoService;
     }
 
     /** 查询外管礼包 */
@@ -93,7 +98,7 @@ public class ExternalManagerController extends BaseController
     @PostMapping("/gift-packs")
     public AjaxResult saveGiftPack(@Valid @RequestBody ExternalGiftPack giftPack)
     {
-        ensureSuperAdmin();
+        ensureInternalAdmin();
         giftPackService.saveGiftPack(giftPack, currentLoginName());
         return AjaxResult.success();
     }
@@ -103,15 +108,14 @@ public class ExternalManagerController extends BaseController
     public AjaxResult giftPackQuotaList(@RequestParam(required = false) Long accountId,
             @RequestParam(defaultValue = "false") boolean all)
     {
-        if (all)
+        if (isInternalAdmin())
         {
-            ensureSuperAdmin();
-            return AjaxResult.success(giftPackService.selectQuotaList(null));
+            return AjaxResult.success(giftPackService.selectQuotaList(all ? null : accountId));
         }
         Long currentAccountId = currentAccountId();
         if (accountId != null && !accountId.equals(currentAccountId))
         {
-            ensureSuperAdmin();
+            throw new ServiceException("不能查询其他外管账号的礼包额度");
         }
         return AjaxResult.success(giftPackService.selectQuotaList(accountId == null ? currentAccountId : accountId));
     }
@@ -120,7 +124,7 @@ public class ExternalManagerController extends BaseController
     @PutMapping("/gift-packs/quotas")
     public AjaxResult saveGiftPackQuota(@Valid @RequestBody ExternalGiftPackQuotaSaveRequest request)
     {
-        ensureSuperAdmin();
+        ensureInternalAdmin();
         giftPackService.saveQuota(request);
         return AjaxResult.success();
     }
@@ -138,6 +142,21 @@ public class ExternalManagerController extends BaseController
     public AjaxResult giftPackIssueList()
     {
         return AjaxResult.success(giftPackService.selectIssueList(currentAccountId()));
+    }
+
+    /** 查询当前外管账号的靓号池。 */
+    @GetMapping("/chat-nos")
+    public AjaxResult chatNoList()
+    {
+        return AjaxResult.success(chatNoService.selectPoolList(currentAccountId()));
+    }
+
+    /** 分配靓号给用户。 */
+    @PostMapping("/chat-nos/assign")
+    public AjaxResult assignChatNo(@Valid @RequestBody ExternalChatNoAssignRequest request)
+    {
+        chatNoService.assign(accountService.selectAccountById(currentAccountId()), request);
+        return AjaxResult.success();
     }
 
     /** 外管账号登录 */
@@ -308,6 +327,34 @@ public class ExternalManagerController extends BaseController
         return AjaxResult.success(account);
     }
 
+    /** 管理后台查询外管账号靓号池。 */
+    @GetMapping("/accounts/{id}/chat-nos")
+    public AjaxResult accountChatNoList(@PathVariable Long id)
+    {
+        ensureInternalAdmin();
+        accountService.selectAccountById(id);
+        return AjaxResult.success(chatNoService.selectPoolList(id));
+    }
+
+    /** 管理后台向外管账号划拨靓号。 */
+    @PostMapping("/accounts/chat-nos")
+    public AjaxResult addAccountChatNo(@Valid @RequestBody ExternalChatNoPoolSaveRequest request)
+    {
+        ensureInternalAdmin();
+        accountService.selectAccountById(request.getAccountId());
+        chatNoService.addPool(request);
+        return AjaxResult.success();
+    }
+
+    /** 管理后台回收外管账号未分配靓号。 */
+    @DeleteMapping("/accounts/{accountId}/chat-nos/{chatNo}")
+    public AjaxResult removeAccountChatNo(@PathVariable Long accountId, @PathVariable Long chatNo)
+    {
+        ensureInternalAdmin();
+        chatNoService.removeAvailablePool(accountId, chatNo);
+        return AjaxResult.success();
+    }
+
     /** 新增外管账号 */
     @PostMapping("/accounts")
     public AjaxResult add(@Valid @RequestBody ExternalManagerSaveRequest request)
@@ -441,6 +488,22 @@ public class ExternalManagerController extends BaseController
         {
             throw new ServiceException("仅 Super Admin 可以配置外管礼包和额度");
         }
+    }
+
+    /** 校验管理后台管理员登录态。 */
+    private void ensureInternalAdmin()
+    {
+        if (!isInternalAdmin())
+        {
+            throw new ServiceException("仅管理后台管理员可以配置礼包和靓号");
+        }
+    }
+
+    /** 判断当前是否为管理后台管理员。 */
+    private boolean isInternalAdmin()
+    {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null && authentication.getPrincipal() instanceof LoginUser;
     }
 
     /** 获取当前外管登录账号 */

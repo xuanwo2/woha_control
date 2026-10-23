@@ -9,19 +9,19 @@ export const getExternalProfile = () => request({ url: '/external/auth/profile',
 /** 修改当前外管密码 */
 export const changeExternalPassword = (data) => request({ url: '/external/auth/password', method: 'put', data })
 /** 查询外管账号 */
-export const listExternalAccount = (params) => request({ url: '/external/accounts/list', method: 'get', params })
+export const listExternalAccount = (params) => request({ url: '/external/accounts/list', method: 'get', params, headers: { externalToken: false } })
 /** 查询外管账号详情 */
-export const getExternalAccount = (id) => request({ url: `/external/accounts/${id}`, method: 'get' })
+export const getExternalAccount = (id) => request({ url: `/external/accounts/${id}`, method: 'get', headers: { externalToken: false } })
 /** 新增外管账号 */
-export const addExternalAccount = (data) => request({ url: '/external/accounts', method: 'post', data })
+export const addExternalAccount = (data) => request({ url: '/external/accounts', method: 'post', data, headers: { externalToken: false } })
 /** 修改外管账号 */
-export const updateExternalAccount = (id, data) => request({ url: `/external/accounts/${id}`, method: 'put', data })
+export const updateExternalAccount = (id, data) => request({ url: `/external/accounts/${id}`, method: 'put', data, headers: { externalToken: false } })
 /** 修改账号状态 */
-export const changeExternalAccountStatus = (id, status) => request({ url: `/external/accounts/${id}/status`, method: 'put', data: { status } })
+export const changeExternalAccountStatus = (id, status) => request({ url: `/external/accounts/${id}/status`, method: 'put', data: { status }, headers: { externalToken: false } })
 /** 删除账号 */
-export const delExternalAccount = (id) => request({ url: `/external/accounts/${id}`, method: 'delete' })
+export const delExternalAccount = (id) => request({ url: `/external/accounts/${id}`, method: 'delete', headers: { externalToken: false } })
 /** 重置账号密码 */
-export const resetExternalAccountPassword = (id, password) => request({ url: `/external/accounts/${id}/password`, method: 'put', data: { password } })
+export const resetExternalAccountPassword = (id, password) => request({ url: `/external/accounts/${id}/password`, method: 'put', data: { password }, headers: { externalToken: false } })
 /** 查询角色默认权限 */
 export const getExternalRolePermissions = (regionId) => request({ url: '/external/role-permissions', method: 'get', params: { regionId } })
 /** 保存角色默认权限 */
@@ -43,12 +43,22 @@ export const getExternalGuildFlowSummary = (params) => request({ url: '/external
 /** 查询外管礼包 */
 export const listExternalGiftPacks = (params) => request({ url: '/external/gift-packs', method: 'get', params })
 /** 保存外管礼包 */
-export const saveExternalGiftPack = (data) => request({ url: '/external/gift-packs', method: 'post', data })
+export const saveExternalGiftPack = (data) => request({ url: '/external/gift-packs', method: 'post', data, headers: { externalToken: false } })
 /** 查询外管礼包额度 */
 export const listExternalGiftPackQuotas = (params) => request({ url: '/external/gift-packs/quotas', method: 'get', params })
 /** 保存外管礼包额度 */
-export const saveExternalGiftPackQuota = (data) => request({ url: '/external/gift-packs/quotas', method: 'put', data })
+export const saveExternalGiftPackQuota = (data) => request({ url: '/external/gift-packs/quotas', method: 'put', data, headers: { externalToken: false } })
 /** 发放外管礼包 */
 export const issueExternalGiftPack = (data) => request({ url: '/external/gift-packs/issue', method: 'post', data })
 /** 查询礼包发放记录 */
 export const listExternalGiftPackIssues = () => request({ url: '/external/gift-packs/issues', method: 'get' })
+/** 查询当前外管账号靓号池 */
+export const listExternalChatNos = () => request({ url: '/external/chat-nos', method: 'get' })
+/** 分配靓号 */
+export const assignExternalChatNo = (data) => request({ url: '/external/chat-nos/assign', method: 'post', data })
+/** 查询账号靓号池 */
+export const listExternalAccountChatNos = (accountId) => request({ url: `/external/accounts/${accountId}/chat-nos`, method: 'get', headers: { externalToken: false } })
+/** 向账号划拨靓号 */
+export const addExternalAccountChatNo = (data) => request({ url: '/external/accounts/chat-nos', method: 'post', data, headers: { externalToken: false } })
+/** 回收账号未分配靓号 */
+export const delExternalAccountChatNo = (accountId, chatNo) => request({ url: `/external/accounts/${accountId}/chat-nos/${chatNo}`, method: 'delete', headers: { externalToken: false } })

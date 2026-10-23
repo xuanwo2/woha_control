@@ -33,7 +33,7 @@ service.interceptors.request.use(config => {
   }
   // BI 看板及治理接口统一携带当前区域编号
   const normalizedUrl = String(config.url || '').replace(/^\/+/, '')
-  if (normalizedUrl.startsWith('external/') && getExternalToken()) {
+  if (normalizedUrl.startsWith('external/') && config.headers?.externalToken !== false && getExternalToken()) {
     config.headers['X-External-Token'] = getExternalToken()
   }
   if (normalizedUrl.startsWith('bi/')) {

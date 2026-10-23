@@ -38,4 +38,6 @@ public class ExternalManagerSaveRequest
     private String whatsapp;
     /** 说明 */
     private String remark;
+    /** 礼包可赠次数配置 */
+    private List<ExternalGiftPackQuotaSaveRequest> giftQuotas;
 }
