@@ -32,3 +32,11 @@ export const getExternalWorkbench = () => request({ url: '/external/workbench', 
 export const listExternalTeamMembers = (params) => request({ url: '/external/team/members', method: 'get', params })
 /** 新增下级 */
 export const addExternalSubordinate = (data) => request({ url: '/external/team/subordinates', method: 'post', data })
+/** 查询可选公会负责人 */
+export const listExternalGuildResponsibles = () => request({ url: '/external/guild/responsibles', method: 'get' })
+/** 新建公会 */
+export const createExternalGuild = (data) => request({ url: '/external/guild', method: 'post', data })
+/** 查询公会列表 */
+export const listExternalGuild = (params) => request({ url: '/external/guild/list', method: 'get', params })
+/** 查询公会流水汇总 */
+export const getExternalGuildFlowSummary = (params) => request({ url: '/external/guild/flow-summary', method: 'get', params })

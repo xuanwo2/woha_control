@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.woha.control.system.mapper.ExternalGuildMapper">
+    <select id="selectWohaUserForUpdate" resultType="ExternalWohaUser">
+        select uid, chat_no, region_id from `user` where chat_no = #{chatNo} limit 1 for update
+    </select>
+
+    <select id="countFamilyMemberByUid" resultType="int">
+        select count(1) from fm_family_user where uid = #{uid}
+    </select>
+
+    <select id="selectFamilyId" resultType="java.lang.Long">select uuid_short()</select>
+
+    <insert id="insertFamily">
+        insert into fm_family
+        (family_id, family_no, uid, responsible_uid, family_name, family_logo, status, create_time, update_time,
+         user_num, room_num, family_room_num, whatsapp, create_source, region_id)
+        values
+        (#{familyId}, #{familyId}, #{captainUid}, #{responsibleUid}, #{request.familyName}, #{request.familyLogo}, 1, now(), now(),
+         1, 0, 0, #{request.whatsapp}, 0, #{regionId})
+    </insert>
+
+    <insert id="insertCaptainMember">
+        insert into fm_family_user
+        (uid, family_id, type, anchor_status, create_time, first_join, region_id)
+        values (#{captainUid}, #{familyId}, 0, 0, now(), 1, #{regionId})
+    </insert>
+
+    <sql id="guildFilters">
+        where f.responsible_uid in
+        <foreach collection="visibleWohaUids" item="uid" open="(" separator="," close=")">#{uid}</foreach>
+        <if test="keyword != null and keyword != ''">
+            and (cast(f.family_no as char) like concat('%', #{keyword}, '%') or f.family_name like concat('%', #{keyword}, '%'))
+        </if>
+        <if test="responsibleWohaUid != null">and f.responsible_uid = #{responsibleWohaUid}</if>
+        <if test="createSource != null">and f.create_source = #{createSource}</if>
+    </sql>
+
+    <sql id="guildJoin">
+        from fm_family f
+        left join `user` captain on captain.uid = f.uid
+        left join (
+            select family_id, count(1) as anchor_count
+            from fm_family_user where anchor_status = 1 group by family_id
+        ) anchor_stat on anchor_stat.family_id = f.family_id
+        left join (
+            select buf.family_id,
+                   coalesce(sum(case when day_stat.count_day between #{startDate} and #{endDate} then day_stat.gold_num + day_stat.luck_gold_num else 0 end), 0) as range_flow,
+                   coalesce(sum(case when day_stat.count_day between #{weekStartDate} and #{endDate} then day_stat.gold_num + day_stat.luck_gold_num else 0 end), 0) as week_flow,
+                   coalesce(sum(case when day_stat.count_day between #{monthStartDate} and #{endDate} then day_stat.gold_num + day_stat.luck_gold_num else 0 end), 0) as month_flow,
+                   coalesce(sum(day_stat.gold_num + day_stat.luck_gold_num), 0) as total_flow
+            from bd_user_family_day day_stat
+            join bd_user_family buf on buf.id = day_stat.bd_user_family_id
+            where day_stat.count_day &lt;= #{endDate}
+            group by buf.family_id
+        ) flow on flow.family_id = f.family_id
+    </sql>
+
+    <select id="selectGuildList" resultType="ExternalGuildVO">
+        select f.family_id, f.family_no, f.family_name, captain.chat_no as captain_chat_no,
+               captain.nickname as captain_nickname, f.responsible_uid as responsible_woha_uid,
+               ifnull(anchor_stat.anchor_count, 0) as anchor_count,
+               ifnull(flow.range_flow, 0) as range_flow, ifnull(flow.week_flow, 0) as week_flow,
+               ifnull(flow.month_flow, 0) as month_flow, ifnull(flow.total_flow, 0) as total_flow,
+               case f.create_source when 0 then '外管创建' when 1 then '入驻申请' else '未知' end as create_method,
+               case f.status when 1 then '正常' when 2 then '隐藏' when 3 then '会长解散' when 4 then '管理员解散' else '异常' end as status_name,
+               f.create_time
+        <include refid="guildJoin"/>
+        <include refid="guildFilters"/>
+        order by f.create_time desc, f.family_id desc
+    </select>
+
+    <select id="selectGuildFlowSummary" resultType="ExternalGuildFlowSummary">
+        select coalesce(sum(ifnull(flow.range_flow, 0)), 0) as range_flow,
+               coalesce(sum(ifnull(flow.week_flow, 0)), 0) as week_flow,
+               coalesce(sum(ifnull(flow.month_flow, 0)), 0) as month_flow,
+               coalesce(sum(ifnull(flow.total_flow, 0)), 0) as total_flow
+        <include refid="guildJoin"/>
+        <include refid="guildFilters"/>
+    </select>
+
+</mapper>

@@ -59,8 +59,8 @@ export const constantRoutes = [
     children: [
       { path: 'workbench', component: () => import('@/views/external/Workbench.vue') },
       { path: 'team', component: () => import('@/views/external/Team.vue') },
-      { path: 'guild', component: () => import('@/views/external/Placeholder.vue') },
-      { path: 'guild-flow', component: () => import('@/views/external/Placeholder.vue') },
+      { path: 'guild', component: () => import('@/views/external/Guild.vue') },
+      { path: 'guild-flow', component: () => import('@/views/external/GuildFlow.vue') },
       { path: 'gift', component: () => import('@/views/external/Placeholder.vue') },
       { path: 'chat-no', component: () => import('@/views/external/Placeholder.vue') },
       { path: 'account-ban', component: () => import('@/views/external/Placeholder.vue') },

@@ -2,12 +2,15 @@ package com.woha.control.web.controller.external;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import com.github.pagehelper.PageHelper;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -26,6 +29,7 @@ import com.woha.control.common.core.domain.model.LoginUser;
 import com.woha.control.common.core.page.TableDataInfo;
 import com.woha.control.common.exception.ServiceException;
 import com.woha.control.common.utils.ip.IpUtils;
+import com.woha.control.common.utils.poi.ExcelUtil;
 import com.woha.control.framework.security.filter.ExternalAuthenticationTokenFilter;
 import com.woha.control.framework.web.service.ExternalTokenService;
 import com.woha.control.system.domain.external.ExternalLoginRequest;
@@ -36,6 +40,11 @@ import com.woha.control.system.domain.external.ExternalPasswordChangeRequest;
 import com.woha.control.system.domain.external.ExternalWohaUser;
 import com.woha.control.system.domain.external.ExternalSubordinateCreateRequest;
 import com.woha.control.system.domain.external.ExternalTeamMetric;
+import com.woha.control.system.domain.external.ExternalGuildCreateRequest;
+import com.woha.control.system.domain.external.ExternalGuildFlowSummary;
+import com.woha.control.system.domain.external.ExternalGuildQuery;
+import com.woha.control.system.domain.external.ExternalGuildVO;
+import com.woha.control.system.service.IExternalGuildService;
 import com.woha.control.system.service.IExternalManagerTeamService;
 import com.woha.control.system.service.IExternalManagerAccountService;
 import com.woha.control.system.service.IExternalWohaUserService;
@@ -53,14 +62,17 @@ public class ExternalManagerController extends BaseController
     private final IExternalWohaUserService wohaUserService;
     private final ExternalTokenService externalTokenService;
     private final IExternalManagerTeamService teamService;
+    private final IExternalGuildService guildService;
 
     public ExternalManagerController(IExternalManagerAccountService accountService,
-            IExternalWohaUserService wohaUserService, ExternalTokenService externalTokenService, IExternalManagerTeamService teamService)
+            IExternalWohaUserService wohaUserService, ExternalTokenService externalTokenService,
+            IExternalManagerTeamService teamService, IExternalGuildService guildService)
     {
         this.accountService = accountService;
         this.wohaUserService = wohaUserService;
         this.externalTokenService = externalTokenService;
         this.teamService = teamService;
+        this.guildService = guildService;
     }
 
     /** 外管账号登录 */
@@ -126,6 +138,66 @@ public class ExternalManagerController extends BaseController
     public AjaxResult addSubordinate(@Valid @RequestBody ExternalSubordinateCreateRequest request)
     {
         String password = accountService.createSubordinate(accountService.selectAccountById(currentAccountId()), request); AjaxResult result = AjaxResult.success(); result.put("initialPassword", password); return result;
+    }
+
+    /** 查询当前账号可选择的公会负责人 */
+    @GetMapping("/guild/responsibles")
+    public AjaxResult guildResponsibles()
+    {
+        ExternalManagerAccount current = accountService.selectAccountById(currentAccountId());
+        List<ExternalManagerAccount> accounts = selectGuildResponsibleAccounts(current);
+        enrichWohaUsers(accounts);
+        accounts.forEach(item -> item.setPassword(null));
+        return AjaxResult.success(accounts);
+    }
+
+    /** 创建外管公会 */
+    @PostMapping("/guild")
+    public AjaxResult createGuild(@Valid @RequestBody ExternalGuildCreateRequest request)
+    {
+        ExternalManagerAccount current = accountService.selectAccountById(currentAccountId());
+        ExternalManagerAccount responsible = selectGuildResponsibleAccounts(current).stream()
+                .filter(item -> item.getId().equals(request.getResponsibleAccountId())).findFirst()
+                .orElseThrow(() -> new ServiceException("负责人不在当前账号可选范围内"));
+        Long familyId = guildService.createGuild(request, responsible);
+        return AjaxResult.success("创建成功", Collections.singletonMap("familyId", familyId));
+    }
+
+    /** 分页查询当前外管可见公会 */
+    @GetMapping("/guild/list")
+    public TableDataInfo guildList(ExternalGuildQuery query)
+    {
+        ExternalManagerAccount current = accountService.selectAccountById(currentAccountId());
+        List<ExternalManagerAccount> accounts = selectVisibleGuildAccounts(current);
+        query.setVisibleWohaUids(accounts.stream().map(ExternalManagerAccount::getWohaUid).collect(Collectors.toList()));
+        startPage();
+        List<ExternalGuildVO> list = guildService.selectGuildList(query);
+        enrichGuildAccounts(list, accounts);
+        return getDataTable(list);
+    }
+
+    /** 查询当前外管可见公会流水汇总 */
+    @GetMapping("/guild/flow-summary")
+    public AjaxResult guildFlowSummary(ExternalGuildQuery query)
+    {
+        ExternalManagerAccount current = accountService.selectAccountById(currentAccountId());
+        List<ExternalManagerAccount> accounts = selectVisibleGuildAccounts(current);
+        query.setVisibleWohaUids(accounts.stream().map(ExternalManagerAccount::getWohaUid).collect(Collectors.toList()));
+        ExternalGuildFlowSummary summary = guildService.selectGuildFlowSummary(query);
+        return AjaxResult.success(summary);
+    }
+
+    /** 导出当前外管可见公会流水，最多一万条 */
+    @PostMapping("/guild/export")
+    public void exportGuild(HttpServletResponse response, ExternalGuildQuery query)
+    {
+        ExternalManagerAccount current = accountService.selectAccountById(currentAccountId());
+        List<ExternalManagerAccount> accounts = selectVisibleGuildAccounts(current);
+        query.setVisibleWohaUids(accounts.stream().map(ExternalManagerAccount::getWohaUid).collect(Collectors.toList()));
+        PageHelper.startPage(1, 10000, false);
+        List<ExternalGuildVO> list = guildService.selectGuildList(query);
+        enrichGuildAccounts(list, accounts);
+        new ExcelUtil<>(ExternalGuildVO.class).exportExcel(response, list, "公会流水");
     }
 
     /** 修改当前外管账号密码 */
@@ -238,6 +310,45 @@ public class ExternalManagerController extends BaseController
         accounts.forEach(item -> {
             ExternalWohaUser user = users.get(item.getWohaUid());
             if (user != null) item.setWohaChatNo(user.getChatNo());
+        });
+    }
+
+    /** 查询当前账号可查看的有效 BD 外管账号 */
+    private List<ExternalManagerAccount> selectVisibleGuildAccounts(ExternalManagerAccount current)
+    {
+        List<Long> ids = teamService.resolveVisibleAccountIds(current);
+        return new ArrayList<>(teamService.selectTeamMembers(ids, null, null, "0"));
+    }
+
+    /** 按外管角色收敛建会负责人范围 */
+    private List<ExternalManagerAccount> selectGuildResponsibleAccounts(ExternalManagerAccount current)
+    {
+        List<ExternalManagerAccount> accounts = new ArrayList<>(teamService.selectTeamMembers(
+                teamService.resolveVisibleAccountIds(current), null, null, "0"));
+        if ("BD".equals(current.getRoleCode()))
+        {
+            accounts.removeIf(item -> !current.getId().equals(item.getId()));
+        }
+        else if ("BD_LEADER".equals(current.getRoleCode()))
+        {
+            accounts.removeIf(item -> !current.getId().equals(item.getId())
+                    && !(current.getId().equals(item.getParentId()) && "BD".equals(item.getRoleCode())));
+        }
+        return accounts;
+    }
+
+    /** 补齐公会列表中的外管负责人展示名称 */
+    private void enrichGuildAccounts(List<ExternalGuildVO> guilds, List<ExternalManagerAccount> accounts)
+    {
+        Map<Long, ExternalManagerAccount> accountByUid = accounts.stream().collect(Collectors.toMap(
+                ExternalManagerAccount::getWohaUid, Function.identity(), (first, ignored) -> first));
+        Map<Long, ExternalManagerAccount> accountById = accounts.stream().collect(Collectors.toMap(
+                ExternalManagerAccount::getId, Function.identity(), (first, ignored) -> first));
+        guilds.forEach(item -> {
+            ExternalManagerAccount responsible = accountByUid.get(item.getResponsibleWohaUid());
+            ExternalManagerAccount leader = responsible == null ? null : accountById.get(responsible.getParentId());
+            item.setResponsibleName(responsible == null ? "--" : responsible.getRealName());
+            item.setBdLeaderName(leader == null ? "--" : leader.getRealName());
         });
     }
 
