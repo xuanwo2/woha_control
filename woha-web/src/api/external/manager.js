@@ -62,3 +62,19 @@ export const listExternalAccountChatNos = (accountId) => request({ url: `/extern
 export const addExternalAccountChatNo = (data) => request({ url: '/external/accounts/chat-nos', method: 'post', data, headers: { externalToken: false } })
 /** 回收账号未分配靓号 */
 export const delExternalAccountChatNo = (accountId, chatNo) => request({ url: `/external/accounts/${accountId}/chat-nos/${chatNo}`, method: 'delete', headers: { externalToken: false } })
+/** 封禁账号 */
+export const banExternalAccount = (data) => request({ url: '/external/account-bans', method: 'post', data })
+/** 解除账号封禁 */
+export const releaseExternalAccountBan = (chatNo) => request({ url: `/external/account-bans/${chatNo}/release`, method: 'post' })
+/** 查询外管操作记录 */
+export const listExternalOperationLogs = (params) => request({ url: '/external/operation-logs', method: 'get', params, headers: { externalToken: false } })
+/** 导出公会列表 */
+export const exportExternalGuildList = (data) => request({ url: '/external/guild/list/export', method: 'post', data, responseType: 'blob' })
+/** 导出公会流水 */
+export const exportExternalGuildFlow = (data) => request({ url: '/external/guild/export', method: 'post', data, responseType: 'blob' })
+/** 导出团队成员 */
+export const exportExternalTeam = () => request({ url: '/external/team/members/export', method: 'post', responseType: 'blob' })
+/** 导出礼包赠送记录 */
+export const exportExternalGiftIssues = () => request({ url: '/external/gift-packs/issues/export', method: 'post', responseType: 'blob' })
+/** 导出账号分配记录 */
+export const exportExternalAssignments = () => request({ url: '/external/account-assignments/export', method: 'post', responseType: 'blob' })

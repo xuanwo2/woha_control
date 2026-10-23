@@ -76,3 +76,22 @@ CREATE TABLE `external_chat_no_pool` (
     KEY `idx_external_chat_no_pool_account_status` (`account_id`, `status`),
     KEY `idx_external_chat_no_pool_expire_time` (`expire_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='外管靓号池';
+
+CREATE TABLE `external_operation_log` (
+    `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '操作记录主键',
+    `account_id` BIGINT NOT NULL COMMENT '外管账号主键',
+    `super_admin_id` BIGINT DEFAULT NULL COMMENT '所属超级管理员账号主键',
+    `role_code` VARCHAR(32) NOT NULL COMMENT '外管角色编码',
+    `operation_type` VARCHAR(64) NOT NULL COMMENT '操作类型',
+    `target` VARCHAR(128) DEFAULT '' COMMENT '操作对象',
+    `content` VARCHAR(1000) DEFAULT '' COMMENT '操作内容',
+    `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
+    PRIMARY KEY (`id`),
+    KEY `idx_external_operation_log_account_time` (`account_id`, `create_time`),
+    KEY `idx_external_operation_log_super_time` (`super_admin_id`, `create_time`),
+    KEY `idx_external_operation_log_type_time` (`operation_type`, `create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='外管操作记录';
+
+INSERT IGNORE INTO sys_menu VALUES
+('2005', '外管操作记录', '0', '9', 'external-operation-log', 'external/OperationLog', '', '', 1, 0, 'C', '0', '0', 'external:operationLog:list', 'form', 'admin', sysdate(), '', null, '外管操作记录菜单');
+INSERT IGNORE INTO sys_role_menu (role_id, menu_id) VALUES (1, 2005);

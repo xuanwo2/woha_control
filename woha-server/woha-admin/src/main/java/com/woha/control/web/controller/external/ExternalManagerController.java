@@ -49,6 +49,11 @@ import com.woha.control.system.domain.external.ExternalGiftPackIssueRequest;
 import com.woha.control.system.domain.external.ExternalGiftPackQuotaSaveRequest;
 import com.woha.control.system.domain.external.ExternalChatNoAssignRequest;
 import com.woha.control.system.domain.external.ExternalChatNoPoolSaveRequest;
+import com.woha.control.system.domain.external.ExternalAccountBanRequest;
+import com.woha.control.system.domain.external.ExternalOperationLog;
+import com.woha.control.system.domain.external.ExternalManagerPermission;
+import com.woha.control.system.service.IExternalAccountBanService;
+import com.woha.control.system.service.ExternalOperationLogService;
 import com.woha.control.system.service.IExternalGiftPackService;
 import com.woha.control.system.service.IExternalChatNoService;
 import com.woha.control.system.service.IExternalGuildService;
@@ -72,11 +77,13 @@ public class ExternalManagerController extends BaseController
     private final IExternalGuildService guildService;
     private final IExternalGiftPackService giftPackService;
     private final IExternalChatNoService chatNoService;
+    private final IExternalAccountBanService accountBanService;
+    private final ExternalOperationLogService operationLogService;
 
     public ExternalManagerController(IExternalManagerAccountService accountService,
             IExternalWohaUserService wohaUserService, ExternalTokenService externalTokenService,
             IExternalManagerTeamService teamService, IExternalGuildService guildService,
-            IExternalGiftPackService giftPackService, IExternalChatNoService chatNoService)
+            IExternalGiftPackService giftPackService, IExternalChatNoService chatNoService, IExternalAccountBanService accountBanService, ExternalOperationLogService operationLogService)
     {
         this.accountService = accountService;
         this.wohaUserService = wohaUserService;
@@ -85,6 +92,8 @@ public class ExternalManagerController extends BaseController
         this.guildService = guildService;
         this.giftPackService = giftPackService;
         this.chatNoService = chatNoService;
+        this.accountBanService = accountBanService;
+        this.operationLogService = operationLogService;
     }
 
     /** 查询外管礼包 */
@@ -133,7 +142,9 @@ public class ExternalManagerController extends BaseController
     @PostMapping("/gift-packs/issue")
     public AjaxResult issueGiftPack(@Valid @RequestBody ExternalGiftPackIssueRequest request)
     {
-        giftPackService.issueGiftPack(accountService.selectAccountById(currentAccountId()), request);
+        ExternalManagerAccount account = accountService.selectAccountById(currentAccountId());
+        giftPackService.issueGiftPack(account, request);
+        operationLogService.record(account, "ISSUE_GIFT", String.valueOf(request.getReceiverChatNo()), "赠送礼包");
         return AjaxResult.success();
     }
 
@@ -155,8 +166,32 @@ public class ExternalManagerController extends BaseController
     @PostMapping("/chat-nos/assign")
     public AjaxResult assignChatNo(@Valid @RequestBody ExternalChatNoAssignRequest request)
     {
-        chatNoService.assign(accountService.selectAccountById(currentAccountId()), request);
+        ExternalManagerAccount account = accountService.selectAccountById(currentAccountId()); chatNoService.assign(account, request);
+        operationLogService.record(account, "ASSIGN_CHAT_NO", String.valueOf(request.getReceiverChatNo()), request.getChatNo() + "，" + request.getDayNum() + "天");
         return AjaxResult.success();
+    }
+
+    /** 封禁团队公会成员。 */
+    @PostMapping("/account-bans")
+    public AjaxResult banAccount(@Valid @RequestBody ExternalAccountBanRequest request)
+    {
+        accountBanService.ban(accountService.selectAccountById(currentAccountId()), request);
+        return AjaxResult.success();
+    }
+
+    /** 提前解除团队公会成员封禁。 */
+    @PostMapping("/account-bans/{chatNo}/release")
+    public AjaxResult releaseAccountBan(@PathVariable Long chatNo)
+    {
+        accountBanService.release(accountService.selectAccountById(currentAccountId()), chatNo);
+        return AjaxResult.success();
+    }
+
+    /** 管理后台查询外管操作记录。 */
+    @GetMapping("/operation-logs")
+    public TableDataInfo operationLogList(@RequestParam(required = false) String loginName, @RequestParam(required = false) String superAdminName, @RequestParam(required = false) String operationType)
+    {
+        ensureInternalAdmin(); startPage(); return getDataTable(operationLogService.selectList(loginName, superAdminName, operationType, null, null));
     }
 
     /** 外管账号登录 */
@@ -221,7 +256,7 @@ public class ExternalManagerController extends BaseController
     @PostMapping("/team/subordinates")
     public AjaxResult addSubordinate(@Valid @RequestBody ExternalSubordinateCreateRequest request)
     {
-        String password = accountService.createSubordinate(accountService.selectAccountById(currentAccountId()), request); AjaxResult result = AjaxResult.success(); result.put("initialPassword", password); return result;
+        ExternalManagerAccount account = accountService.selectAccountById(currentAccountId()); String password = accountService.createSubordinate(account, request); operationLogService.record(account, "CREATE_SUBORDINATE", request.getLoginName(), request.getRoleCode()); AjaxResult result = AjaxResult.success(); result.put("initialPassword", password); return result;
     }
 
     /** 查询当前账号可选择的公会负责人 */
@@ -244,6 +279,7 @@ public class ExternalManagerController extends BaseController
                 .filter(item -> item.getId().equals(request.getResponsibleAccountId())).findFirst()
                 .orElseThrow(() -> new ServiceException("负责人不在当前账号可选范围内"));
         Long familyId = guildService.createGuild(request, responsible);
+        operationLogService.record(current, "CREATE_GUILD", String.valueOf(familyId), request.getFamilyName());
         return AjaxResult.success("创建成功", Collections.singletonMap("familyId", familyId));
     }
 
@@ -276,12 +312,42 @@ public class ExternalManagerController extends BaseController
     public void exportGuild(HttpServletResponse response, ExternalGuildQuery query)
     {
         ExternalManagerAccount current = accountService.selectAccountById(currentAccountId());
+        requirePermission(current, ExternalManagerPermission.EXPORT_GUILD_FLOW);
         List<ExternalManagerAccount> accounts = selectVisibleGuildAccounts(current);
         query.setVisibleWohaUids(accounts.stream().map(ExternalManagerAccount::getWohaUid).collect(Collectors.toList()));
         PageHelper.startPage(1, 10000, false);
         List<ExternalGuildVO> list = guildService.selectGuildList(query);
         enrichGuildAccounts(list, accounts);
         new ExcelUtil<>(ExternalGuildVO.class).exportExcel(response, list, "公会流水");
+        operationLogService.record(current, "EXPORT_GUILD_FLOW", "公会流水", "导出" + list.size() + "条");
+    }
+
+    /** 导出当前外管可见公会列表。 */
+    @PostMapping("/guild/list/export")
+    public void exportGuildList(HttpServletResponse response, ExternalGuildQuery query)
+    {
+        ExternalManagerAccount current=accountService.selectAccountById(currentAccountId()); requirePermission(current, ExternalManagerPermission.EXPORT_GUILD_LIST); List<ExternalManagerAccount> accounts=selectVisibleGuildAccounts(current); query.setVisibleWohaUids(accounts.stream().map(ExternalManagerAccount::getWohaUid).collect(Collectors.toList())); PageHelper.startPage(1,10000,false); List<ExternalGuildVO> list=guildService.selectGuildList(query); enrichGuildAccounts(list,accounts); new ExcelUtil<>(ExternalGuildVO.class).exportExcel(response,list,"公会列表"); operationLogService.record(current,"EXPORT_GUILD_LIST","公会列表","导出"+list.size()+"条");
+    }
+
+    /** 导出当前外管可见团队成员。 */
+    @PostMapping("/team/members/export")
+    public void exportTeamMembers(HttpServletResponse response)
+    {
+        ExternalManagerAccount current=accountService.selectAccountById(currentAccountId()); requirePermission(current, ExternalManagerPermission.EXPORT_TEAM_MEMBER); List<ExternalManagerAccount> list=teamService.selectTeamMembers(teamService.resolveVisibleAccountIds(current),null,null,null); enrichWohaUsers(list); new ExcelUtil<>(ExternalManagerAccount.class).exportExcel(response,list,"团队成员"); operationLogService.record(current,"EXPORT_TEAM_MEMBER","团队成员","导出"+list.size()+"条");
+    }
+
+    /** 导出当前外管礼包赠送记录。 */
+    @PostMapping("/gift-packs/issues/export")
+    public void exportGiftIssues(HttpServletResponse response)
+    {
+        ExternalManagerAccount current=accountService.selectAccountById(currentAccountId()); requirePermission(current, ExternalManagerPermission.EXPORT_GIFT_ISSUE); List<com.woha.control.system.domain.external.ExternalGiftPackIssue> list=giftPackService.selectIssueList(current.getId()); new ExcelUtil<>(com.woha.control.system.domain.external.ExternalGiftPackIssue.class).exportExcel(response,list,"礼包赠送记录"); operationLogService.record(current,"EXPORT_GIFT_ISSUE","礼包赠送记录","导出"+list.size()+"条");
+    }
+
+    /** 导出当前外管新增下级账号记录。 */
+    @PostMapping("/account-assignments/export")
+    public void exportAccountAssignments(HttpServletResponse response)
+    {
+        ExternalManagerAccount current=accountService.selectAccountById(currentAccountId()); requirePermission(current, ExternalManagerPermission.EXPORT_ACCOUNT_ASSIGNMENT); List<ExternalOperationLog> list=operationLogService.selectList(current.getLoginName(),null,"CREATE_SUBORDINATE",null,null); new ExcelUtil<>(ExternalOperationLog.class).exportExcel(response,list,"账号分配记录"); operationLogService.record(current,"EXPORT_ACCOUNT_ASSIGNMENT","账号分配记录","导出"+list.size()+"条");
     }
 
     /** 修改当前外管账号密码 */
@@ -294,6 +360,7 @@ public class ExternalManagerController extends BaseController
             throw new ServiceException("外管账号不存在");
         }
         accountService.changePassword(accounts.get(0).getId(), request.getOldPassword(), request.getNewPassword());
+        operationLogService.record(accounts.get(0), "CHANGE_PASSWORD", "自身账号", "修改密码");
         return AjaxResult.success();
     }
 
@@ -504,6 +571,12 @@ public class ExternalManagerController extends BaseController
     {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication != null && authentication.getPrincipal() instanceof LoginUser;
+    }
+
+    /** 校验外管功能权限。 */
+    private void requirePermission(ExternalManagerAccount account, ExternalManagerPermission permission)
+    {
+        if (account.getPermissions() == null || !List.of(account.getPermissions().split(",")).contains(permission.name())) throw new ServiceException("当前账号没有导出权限");
     }
 
     /** 获取当前外管登录账号 */

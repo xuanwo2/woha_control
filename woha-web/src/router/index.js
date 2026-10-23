@@ -63,8 +63,8 @@ export const constantRoutes = [
       { path: 'guild-flow', component: () => import('@/views/external/GuildFlow.vue') },
       { path: 'gift', component: () => import('@/views/external/Gift.vue') },
       { path: 'chat-no', component: () => import('@/views/external/ChatNo.vue') },
-      { path: 'account-ban', component: () => import('@/views/external/Placeholder.vue') },
-      { path: 'export', component: () => import('@/views/external/Placeholder.vue') },
+      { path: 'account-ban', component: () => import('@/views/external/AccountBan.vue') },
+      { path: 'export', component: () => import('@/views/external/Export.vue') },
       { path: 'accounts', component: () => import('@/views/external/Account.vue') },
       { path: 'role-permissions', component: () => import('@/views/external/RolePermission.vue') }
     ]

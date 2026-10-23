@@ -23,6 +23,14 @@ public enum ExternalManagerPermission
     EXECUTE_BAN,
     /** 提交举报 */
     SUBMIT_REPORT,
-    /** 数据导出 */
-    EXPORT_DATA
+    /** 导出公会列表 */
+    EXPORT_GUILD_LIST,
+    /** 导出公会流水 */
+    EXPORT_GUILD_FLOW,
+    /** 导出团队成员 */
+    EXPORT_TEAM_MEMBER,
+    /** 导出礼包赠送记录 */
+    EXPORT_GIFT_ISSUE,
+    /** 导出账号分配记录 */
+    EXPORT_ACCOUNT_ASSIGNMENT
 }
