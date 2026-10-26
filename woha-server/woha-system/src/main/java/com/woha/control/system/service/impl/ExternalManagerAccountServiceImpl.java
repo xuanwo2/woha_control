@@ -286,6 +286,7 @@ public class ExternalManagerAccountServiceImpl implements IExternalManagerAccoun
         {
             throw new ServiceException("该 Woha 用户已关联其他外管账号");
         }
+        request.setParentId(resolveParentId(request.getParentWohaChatNo(), request.getParentId()));
         validateParent(request.getRoleCode(), request.getParentId(), request.getRegionId(), accountId);
         validatePermissions(request.getPermissions());
         return user;
@@ -361,6 +362,26 @@ public class ExternalManagerAccountServiceImpl implements IExternalManagerAccoun
         {
             throw new ServiceException("BD 的上级必须为 Super Admin 或 BD Leader");
         }
+    }
+
+    /** 根据上级外管的 Woha ChatNo 解析内部账号主键。 */
+    private Long resolveParentId(Long parentWohaChatNo, Long parentId)
+    {
+        if (parentWohaChatNo == null)
+        {
+            return parentId;
+        }
+        ExternalWohaUser parentUser = wohaUserService.selectByChatNo(parentWohaChatNo);
+        if (parentUser == null)
+        {
+            throw new ServiceException("上级账号关联的 Woha 用户不存在");
+        }
+        List<ExternalManagerAccount> accounts = accountMapper.selectAccountList(null, parentUser.getUid(), null, null, "0", null, null);
+        if (accounts.isEmpty())
+        {
+            throw new ServiceException("该 Woha ID 未关联可用的上级外管账号");
+        }
+        return accounts.get(0).getId();
     }
 
     /** 校验密码规则 */

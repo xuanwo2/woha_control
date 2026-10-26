@@ -4,8 +4,11 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import jakarta.servlet.http.HttpServletRequest;
@@ -326,7 +329,7 @@ public class ExternalManagerController extends BaseController
 
     /** 导出当前外管可见公会流水，最多一万条 */
     @PostMapping("/guild/export")
-    public void exportGuild(HttpServletResponse response, ExternalGuildQuery query)
+    public void exportGuild(HttpServletResponse response, ExternalGuildQuery query, @RequestParam(required = false) String fieldCodes)
     {
         ExternalManagerAccount current = accountService.selectAccountById(currentAccountId());
         requirePermission(current, ExternalManagerPermission.EXPORT_GUILD_FLOW);
@@ -335,29 +338,31 @@ public class ExternalManagerController extends BaseController
         PageHelper.startPage(1, 10000, false);
         List<ExternalGuildVO> list = guildService.selectGuildList(query);
         enrichGuildAccounts(list, accounts);
-        new ExcelUtil<>(ExternalGuildVO.class).exportExcel(response, list, "公会流水");
+        ExcelUtil<ExternalGuildVO> excelUtil = new ExcelUtil<>(ExternalGuildVO.class);
+        excelUtil.showColumn(selectExportFields(fieldCodes, "familyName", "familyNo", "responsibleName", "bdLeaderName", "rangeFlow", "weekFlow", "monthFlow", "totalFlow", "createTime"));
+        excelUtil.exportExcel(response, list, "公会流水");
         operationLogService.record(current, "EXPORT_GUILD_FLOW", "公会流水", "导出" + list.size() + "条");
     }
 
     /** 导出当前外管可见公会列表。 */
     @PostMapping("/guild/list/export")
-    public void exportGuildList(HttpServletResponse response, ExternalGuildQuery query)
+    public void exportGuildList(HttpServletResponse response, ExternalGuildQuery query, @RequestParam(required = false) String fieldCodes)
     {
-        ExternalManagerAccount current=accountService.selectAccountById(currentAccountId()); requirePermission(current, ExternalManagerPermission.EXPORT_GUILD_LIST); List<ExternalManagerAccount> accounts=selectVisibleGuildAccounts(current); query.setVisibleWohaUids(accounts.stream().map(ExternalManagerAccount::getWohaUid).collect(Collectors.toList())); PageHelper.startPage(1,10000,false); List<ExternalGuildVO> list=guildService.selectGuildList(query); enrichGuildAccounts(list,accounts); new ExcelUtil<>(ExternalGuildVO.class).exportExcel(response,list,"公会列表"); operationLogService.record(current,"EXPORT_GUILD_LIST","公会列表","导出"+list.size()+"条");
+        ExternalManagerAccount current=accountService.selectAccountById(currentAccountId()); requirePermission(current, ExternalManagerPermission.EXPORT_GUILD_LIST); List<ExternalManagerAccount> accounts=selectVisibleGuildAccounts(current); query.setVisibleWohaUids(accounts.stream().map(ExternalManagerAccount::getWohaUid).collect(Collectors.toList())); PageHelper.startPage(1,10000,false); List<ExternalGuildVO> list=guildService.selectGuildList(query); enrichGuildAccounts(list,accounts); ExcelUtil<ExternalGuildVO> excelUtil = new ExcelUtil<>(ExternalGuildVO.class); excelUtil.showColumn(selectExportFields(fieldCodes, "familyName", "familyNo", "captainChatNo", "captainNickname", "responsibleName", "bdLeaderName", "anchorCount", "monthFlow", "createMethod", "statusName", "createTime")); excelUtil.exportExcel(response,list,"公会列表"); operationLogService.record(current,"EXPORT_GUILD_LIST","公会列表","导出"+list.size()+"条");
     }
 
     /** 导出当前外管可见团队成员。 */
     @PostMapping("/team/members/export")
-    public void exportTeamMembers(HttpServletResponse response)
+    public void exportTeamMembers(HttpServletResponse response, @RequestParam(required = false) String fieldCodes)
     {
-        ExternalManagerAccount current=accountService.selectAccountById(currentAccountId()); requirePermission(current, ExternalManagerPermission.EXPORT_TEAM_MEMBER); List<ExternalManagerAccount> list=teamService.selectTeamMembers(teamService.resolveVisibleAccountIds(current),null,null,null); enrichWohaUsers(list); new ExcelUtil<>(ExternalManagerAccount.class).exportExcel(response,list,"团队成员"); operationLogService.record(current,"EXPORT_TEAM_MEMBER","团队成员","导出"+list.size()+"条");
+        ExternalManagerAccount current=accountService.selectAccountById(currentAccountId()); requirePermission(current, ExternalManagerPermission.EXPORT_TEAM_MEMBER); List<ExternalManagerAccount> list=teamService.selectTeamMembers(teamService.resolveVisibleAccountIds(current),null,null,null); enrichWohaUsers(list); ExcelUtil<ExternalManagerAccount> excelUtil = new ExcelUtil<>(ExternalManagerAccount.class); excelUtil.showColumn(selectExportFields(fieldCodes, "loginName", "realName", "wohaUid", "roleCode", "parentLoginName")); excelUtil.exportExcel(response,list,"团队成员"); operationLogService.record(current,"EXPORT_TEAM_MEMBER","团队成员","导出"+list.size()+"条");
     }
 
     /** 导出当前外管礼包赠送记录。 */
     @PostMapping("/gift-packs/issues/export")
-    public void exportGiftIssues(HttpServletResponse response)
+    public void exportGiftIssues(HttpServletResponse response, @RequestParam(required = false) String fieldCodes)
     {
-        ExternalManagerAccount current=accountService.selectAccountById(currentAccountId()); requirePermission(current, ExternalManagerPermission.EXPORT_GIFT_ISSUE); List<com.woha.control.system.domain.external.ExternalGiftPackIssue> list=giftPackService.selectIssueList(current.getId()); new ExcelUtil<>(com.woha.control.system.domain.external.ExternalGiftPackIssue.class).exportExcel(response,list,"礼包赠送记录"); operationLogService.record(current,"EXPORT_GIFT_ISSUE","礼包赠送记录","导出"+list.size()+"条");
+        ExternalManagerAccount current=accountService.selectAccountById(currentAccountId()); requirePermission(current, ExternalManagerPermission.EXPORT_GIFT_ISSUE); List<com.woha.control.system.domain.external.ExternalGiftPackIssue> list=giftPackService.selectIssueList(current.getId()); ExcelUtil<com.woha.control.system.domain.external.ExternalGiftPackIssue> excelUtil = new ExcelUtil<>(com.woha.control.system.domain.external.ExternalGiftPackIssue.class); excelUtil.showColumn(selectExportFields(fieldCodes, "giftName", "receiverUid", "loginName", "contentSnapshot", "status", "createTime")); excelUtil.exportExcel(response,list,"礼包赠送记录"); operationLogService.record(current,"EXPORT_GIFT_ISSUE","礼包赠送记录","导出"+list.size()+"条");
     }
 
     /** 导出当前外管新增下级账号记录。 */
@@ -407,6 +412,12 @@ public class ExternalManagerController extends BaseController
     {
         ExternalManagerAccount account = accountService.selectAccountById(id);
         enrichWohaUsers(Collections.singletonList(account));
+        if (account.getParentId() != null)
+        {
+            ExternalManagerAccount parent = accountService.selectAccountById(account.getParentId());
+            ExternalWohaUser parentUser = wohaUserService.selectByUid(parent.getWohaUid());
+            account.setParentWohaChatNo(parentUser == null ? null : parentUser.getChatNo());
+        }
         account.setPassword(null);
         return AjaxResult.success(account);
     }
@@ -588,6 +599,18 @@ public class ExternalManagerController extends BaseController
     {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication != null && authentication.getPrincipal() instanceof LoginUser;
+    }
+
+    /** 从允许导出的字段中筛选前端提交的列编码。 */
+    private String[] selectExportFields(String fieldCodes, String... allowedFields)
+    {
+        if (fieldCodes == null || fieldCodes.isBlank())
+        {
+            return allowedFields;
+        }
+        Set<String> allowed = new HashSet<>(Arrays.asList(allowedFields));
+        String[] selected = Arrays.stream(fieldCodes.split(",")).filter(allowed::contains).distinct().toArray(String[]::new);
+        return selected.length == 0 ? allowedFields : selected;
     }
 
     /** 校验外管功能权限。 */

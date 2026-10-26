@@ -29,6 +29,8 @@ public class ExternalManagerSaveRequest
     private String roleCode;
     /** 上级外管账号主键 */
     private Long parentId;
+    /** 上级外管关联 Woha 用户 ChatNo */
+    private Long parentWohaChatNo;
     /** 所属大区编号 */
     @NotNull(message = "所属大区不能为空")
     private Integer regionId;

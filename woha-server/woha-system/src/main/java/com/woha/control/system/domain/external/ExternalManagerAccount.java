@@ -2,6 +2,7 @@ package com.woha.control.system.domain.external;
 
 import java.util.Date;
 import lombok.Data;
+import com.woha.control.common.annotation.Excel;
 
 /**
  * 外管账号
@@ -14,14 +15,18 @@ public class ExternalManagerAccount
     /** 主键 */
     private Long id;
     /** 登录账号 */
+    @Excel(name = "外管账号")
     private String loginName;
     /** 密码哈希值 */
     private String password;
     /** 姓名 */
+    @Excel(name = "姓名")
     private String realName;
     /** 关联 Woha 用户 UID */
+    @Excel(name = "关联 Woha UID")
     private Long wohaUid;
     /** 角色编码 */
+    @Excel(name = "角色")
     private String roleCode;
     /** 上级外管账号主键 */
     private Long parentId;
@@ -62,7 +67,10 @@ public class ExternalManagerAccount
     /** Woha 展示账号 */
     private Long wohaChatNo;
     /** 上级外管账号 */
+    @Excel(name = "上级账号")
     private String parentLoginName;
+    /** 上级外管关联 Woha 用户 ChatNo */
+    private Long parentWohaChatNo;
     /** 团队公会数 */
     private Integer guildCount;
     /** 本月流水 */
