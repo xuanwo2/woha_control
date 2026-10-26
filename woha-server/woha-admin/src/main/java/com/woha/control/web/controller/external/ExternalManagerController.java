@@ -2,6 +2,7 @@ package com.woha.control.web.controller.external;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +14,7 @@ import jakarta.validation.Valid;
 import com.github.pagehelper.PageHelper;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -189,9 +191,24 @@ public class ExternalManagerController extends BaseController
 
     /** 管理后台查询外管操作记录。 */
     @GetMapping("/operation-logs")
-    public TableDataInfo operationLogList(@RequestParam(required = false) String loginName, @RequestParam(required = false) String superAdminName, @RequestParam(required = false) String operationType)
+    public TableDataInfo operationLogList(@RequestParam(required = false) String loginName, @RequestParam(required = false) String superAdminName,
+            @RequestParam(required = false) String operationType, @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date beginTime,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date endTime)
     {
-        ensureInternalAdmin(); startPage(); return getDataTable(operationLogService.selectList(loginName, superAdminName, operationType, null, null));
+        ensureInternalAdmin(); startPage(); return getDataTable(operationLogService.selectList(loginName, superAdminName, operationType, beginTime, endTime));
+    }
+
+    /** 管理后台导出外管操作记录。 */
+    @PostMapping("/operation-logs/export")
+    public void exportOperationLogs(HttpServletResponse response, @RequestParam(required = false) String loginName,
+            @RequestParam(required = false) String superAdminName, @RequestParam(required = false) String operationType,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date beginTime,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date endTime)
+    {
+        ensureInternalAdmin();
+        PageHelper.startPage(1, 10000, false);
+        List<ExternalOperationLog> list = operationLogService.selectList(loginName, superAdminName, operationType, beginTime, endTime);
+        new ExcelUtil<>(ExternalOperationLog.class).exportExcel(response, list, "外管操作记录");
     }
 
     /** 外管账号登录 */
