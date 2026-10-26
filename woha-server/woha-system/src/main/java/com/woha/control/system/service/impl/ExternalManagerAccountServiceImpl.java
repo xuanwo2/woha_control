@@ -304,7 +304,7 @@ public class ExternalManagerAccountServiceImpl implements IExternalManagerAccoun
         account.setRegionId(request.getRegionId());
         account.setPermissions(joinPermissions(request.getPermissions()));
         account.setWhatsapp(StringUtils.defaultString(request.getWhatsapp()));
-        account.setRemark(request.getRemark());
+        account.setRemark(StringUtils.defaultString(request.getRemark()));
         account.setCreateBy(operator);
         account.setUpdateBy(operator);
         return account;

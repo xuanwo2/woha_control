@@ -2,10 +2,13 @@ package com.woha.control.system.service.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.woha.control.common.exception.ServiceException;
+import com.woha.control.system.domain.external.ExternalBusinessProp;
 import com.woha.control.system.domain.external.ExternalGiftPack;
 import com.woha.control.system.domain.external.ExternalGiftPackIssue;
 import com.woha.control.system.domain.external.ExternalGiftPackIssueRequest;
@@ -43,9 +46,33 @@ public class ExternalGiftPackServiceImpl implements IExternalGiftPackService
     public List<ExternalGiftPack> selectGiftPackList(String status)
     {
         List<ExternalGiftPack> list = giftPackMapper.selectGiftPackList(status);
+        if (list.isEmpty())
+        {
+            return list;
+        }
+        List<Long> giftIds = list.stream().map(ExternalGiftPack::getId).collect(Collectors.toList());
+        List<ExternalGiftPackItem> items = giftPackMapper.selectItemsByGiftIds(giftIds);
+        Map<Long, List<ExternalGiftPackItem>> itemsByGiftId = items.stream()
+                .collect(Collectors.groupingBy(ExternalGiftPackItem::getGiftId));
+        List<Long> propIds = items.stream().filter(item -> "PROP".equals(item.getItemType()))
+                .map(ExternalGiftPackItem::getPropId).distinct().collect(Collectors.toList());
+        Map<Long, ExternalBusinessProp> propsById = propIds.isEmpty() ? Map.of() : businessService.selectProps(propIds)
+                .stream().collect(Collectors.toMap(ExternalBusinessProp::getId, prop -> prop));
         for (ExternalGiftPack giftPack : list)
         {
-            giftPack.setItems(giftPackMapper.selectItemsByGiftId(giftPack.getId()));
+            List<ExternalGiftPackItem> giftItems = itemsByGiftId.getOrDefault(giftPack.getId(), new ArrayList<>());
+            for (ExternalGiftPackItem item : giftItems)
+            {
+                if ("PROP".equals(item.getItemType()))
+                {
+                    ExternalBusinessProp prop = propsById.get(item.getPropId());
+                    if (prop != null)
+                    {
+                        item.setPropType(prop.getPropType());
+                    }
+                }
+            }
+            giftPack.setItems(giftItems);
         }
         return list;
     }
@@ -140,17 +167,19 @@ public class ExternalGiftPackServiceImpl implements IExternalGiftPackService
         {
             throw new ServiceException("礼包配置不完整");
         }
+        List<Long> propIds = new ArrayList<>();
         for (ExternalGiftPackItem item : giftPack.getItems())
         {
             if (item.getDayNum() == null || item.getDayNum() < 1 || item.getQuantity() == null || item.getQuantity() < 1)
             {
                 throw new ServiceException("礼包内容有效天数或数量不合法");
             }
-            if ("PROP".equals(item.getItemType()) && item.getPropId() != null) continue;
+            if ("PROP".equals(item.getItemType()) && item.getPropId() != null) { propIds.add(item.getPropId()); continue; }
             if ("VIP".equals(item.getItemType()) && (item.getVipLevel() != null
                     && (item.getVipLevel() == 1000 || item.getVipLevel() == 2000 || item.getVipLevel() == 3000))) continue;
             throw new ServiceException("礼包内容类型或内容配置不合法");
         }
+        businessService.validateProps(propIds.stream().distinct().collect(java.util.stream.Collectors.toList()));
     }
 
     /** 判断功能权限 */

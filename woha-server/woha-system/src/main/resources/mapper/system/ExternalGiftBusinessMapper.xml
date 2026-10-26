@@ -2,6 +2,8 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.woha.control.system.mapper.ExternalGiftBusinessMapper">
     <select id="selectValidProp" resultType="ExternalBusinessProp">select id, prop_type, prop_name from prop where id=#{id} and status=1 and prop_type in (1,2,4,6,7,11)</select>
+    <select id="selectValidProps" resultType="ExternalBusinessProp">select id, prop_type, prop_name from prop where id in <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach> and status=1 and prop_type in (1,2,4,6,7,11)</select>
+    <select id="selectPropsByIds" resultType="ExternalBusinessProp">select id, prop_type, prop_name from prop where id in <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach></select>
     <update id="increaseGold">update user_purse set gold_num=gold_num+#{amount} where uid=#{uid}</update>
     <select id="selectGoldBalance" resultType="long">select gold_num from user_purse where uid=#{uid}</select>
     <insert id="insertGoldLog">insert into user_purse_log(uid,operator_type,amount,amount_type,balance,update_balance,order_id,order_type,create_time,remark,region_id) values(#{uid},1,#{amount},1,#{balance},1,#{orderId},901,now(),#{remark},#{regionId})</insert>

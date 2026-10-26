@@ -21,6 +21,7 @@
     </select>
     <select id="selectGiftPackById" resultMap="giftPackResult">select id, gift_name, gold_amount, receive_limit, status, create_time from external_gift_pack where id = #{id}</select>
     <select id="selectItemsByGiftId" resultMap="giftItemResult">select id, gift_id, item_type, prop_id, vip_level, day_num, quantity, sort_no from external_gift_pack_item where gift_id = #{giftId} order by sort_no, id</select>
+    <select id="selectItemsByGiftIds" resultMap="giftItemResult">select id, gift_id, item_type, prop_id, vip_level, day_num, quantity, sort_no from external_gift_pack_item where gift_id in <foreach collection="giftIds" item="giftId" open="(" separator="," close=")">#{giftId}</foreach> order by gift_id, sort_no, id</select>
     <insert id="insertGiftPack" useGeneratedKeys="true" keyProperty="id">insert into external_gift_pack(gift_name,gold_amount,receive_limit,status,create_by,update_by) values(#{giftName},#{goldAmount},#{receiveLimit},#{status},#{createBy},#{updateBy})</insert>
     <update id="updateGiftPack">update external_gift_pack set gift_name=#{giftName},gold_amount=#{goldAmount},receive_limit=#{receiveLimit},status=#{status},update_by=#{updateBy} where id=#{id}</update>
     <delete id="deleteItemsByGiftId">delete from external_gift_pack_item where gift_id = #{giftId}</delete>

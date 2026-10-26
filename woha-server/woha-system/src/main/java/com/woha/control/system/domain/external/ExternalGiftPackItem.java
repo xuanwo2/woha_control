@@ -18,6 +18,8 @@ public class ExternalGiftPackItem
     private String itemType;
     /** 装扮道具主键 */
     private Long propId;
+    /** 装扮道具类型 */
+    private Integer propType;
     /** VIP等级 */
     private Integer vipLevel;
     /** 有效天数 */

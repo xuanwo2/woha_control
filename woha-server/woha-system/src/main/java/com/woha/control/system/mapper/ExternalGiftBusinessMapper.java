@@ -2,6 +2,7 @@ package com.woha.control.system.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import java.util.List;
 import com.woha.control.system.domain.external.ExternalBusinessProp;
 
 /**
@@ -14,6 +15,10 @@ public interface ExternalGiftBusinessMapper
 {
     /** 查询有效装扮 */
     ExternalBusinessProp selectValidProp(@Param("id") Long id);
+    /** 批量查询有效装扮 */
+    List<ExternalBusinessProp> selectValidProps(@Param("ids") List<Long> ids);
+    /** 批量查询装扮 */
+    List<ExternalBusinessProp> selectPropsByIds(@Param("ids") List<Long> ids);
     /** 增加金币余额 */
     int increaseGold(@Param("uid") Long uid, @Param("amount") Long amount);
     /** 查询金币余额 */

@@ -22,6 +22,8 @@ public interface ExternalGiftPackMapper
     ExternalGiftPack selectGiftPackById(@Param("id") Long id);
     /** 查询礼包内容 */
     List<ExternalGiftPackItem> selectItemsByGiftId(@Param("giftId") Long giftId);
+    /** 批量查询礼包内容 */
+    List<ExternalGiftPackItem> selectItemsByGiftIds(@Param("giftIds") List<Long> giftIds);
     /** 新增礼包 */
     int insertGiftPack(ExternalGiftPack giftPack);
     /** 更新礼包 */
