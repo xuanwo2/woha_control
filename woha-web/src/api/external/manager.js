@@ -66,6 +66,8 @@ export const delExternalAccountChatNo = (accountId, chatNo) => request({ url: `/
 export const banExternalAccount = (data) => request({ url: '/external/account-bans', method: 'post', data })
 /** 解除账号封禁 */
 export const releaseExternalAccountBan = (chatNo) => request({ url: `/external/account-bans/${chatNo}/release`, method: 'post' })
+/** 查询当前外管封禁处理记录 */
+export const listExternalAccountBanRecords = () => request({ url: '/external/account-bans/records', method: 'get' })
 /** 查询外管操作记录 */
 export const listExternalOperationLogs = (params) => request({ url: '/external/operation-logs', method: 'get', params, headers: { externalToken: false } })
 /** 导出公会列表 */

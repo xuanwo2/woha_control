@@ -192,6 +192,17 @@ public class ExternalManagerController extends BaseController
         return AjaxResult.success();
     }
 
+    /** 查询当前外管账号的封禁处理记录。 */
+    @GetMapping("/account-bans/records")
+    public AjaxResult accountBanRecords()
+    {
+        ExternalManagerAccount current = accountService.selectAccountById(currentAccountId());
+        List<ExternalOperationLog> records = operationLogService.selectList(current.getLoginName(), null, null, null, null)
+                .stream().filter(item -> "BAN".equals(item.getOperationType()) || "UNBAN".equals(item.getOperationType()))
+                .collect(Collectors.toList());
+        return AjaxResult.success(records);
+    }
+
     /** 管理后台查询外管操作记录。 */
     @GetMapping("/operation-logs")
     public TableDataInfo operationLogList(@RequestParam(required = false) String loginName, @RequestParam(required = false) String superAdminName,
