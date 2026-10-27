@@ -4,6 +4,8 @@ import java.util.List;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.woha.control.common.annotation.DataSource;
+import com.woha.control.common.enums.DataSourceType;
 import com.woha.control.common.exception.ServiceException;
 import com.woha.control.system.domain.external.ExternalChatNoAssignRequest;
 import com.woha.control.system.domain.external.ExternalChatNoPool;
@@ -21,6 +23,7 @@ import com.woha.control.system.service.IExternalWohaUserService;
  * @author luowenshen
  */
 @Service
+@DataSource(DataSourceType.SLAVE)
 public class ExternalChatNoServiceImpl implements IExternalChatNoService
 {
     private final ExternalChatNoMapper chatNoMapper;

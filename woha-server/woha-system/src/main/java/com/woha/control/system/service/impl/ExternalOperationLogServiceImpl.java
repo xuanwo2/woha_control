@@ -3,6 +3,8 @@ package com.woha.control.system.service.impl;
 import java.util.Date;
 import java.util.List;
 import org.springframework.stereotype.Service;
+import com.woha.control.common.annotation.DataSource;
+import com.woha.control.common.enums.DataSourceType;
 import com.woha.control.system.domain.external.ExternalManagerAccount;
 import com.woha.control.system.domain.external.ExternalOperationLog;
 import com.woha.control.system.mapper.ExternalManagerAccountMapper;
@@ -15,6 +17,7 @@ import com.woha.control.system.service.ExternalOperationLogService;
  * @author luowenshen
  */
 @Service
+@DataSource(DataSourceType.SLAVE)
 public class ExternalOperationLogServiceImpl implements ExternalOperationLogService
 {
     private final ExternalOperationLogMapper logMapper;

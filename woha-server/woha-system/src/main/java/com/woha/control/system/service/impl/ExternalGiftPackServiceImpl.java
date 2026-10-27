@@ -7,6 +7,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.woha.control.common.annotation.DataSource;
+import com.woha.control.common.enums.DataSourceType;
 import com.woha.control.common.exception.ServiceException;
 import com.woha.control.system.domain.external.ExternalBusinessProp;
 import com.woha.control.system.domain.external.ExternalGiftPack;
@@ -28,6 +30,7 @@ import com.woha.control.system.service.IExternalWohaUserService;
  * @author luowenshen
  */
 @Service
+@DataSource(DataSourceType.SLAVE)
 public class ExternalGiftPackServiceImpl implements IExternalGiftPackService
 {
     private final ExternalGiftPackMapper giftPackMapper;

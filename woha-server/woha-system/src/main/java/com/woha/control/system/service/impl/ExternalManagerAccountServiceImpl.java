@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.woha.control.common.annotation.DataSource;
+import com.woha.control.common.enums.DataSourceType;
 import com.woha.control.common.exception.ServiceException;
 import com.woha.control.common.utils.StringUtils;
 import com.woha.control.system.domain.external.ExternalManagerAccount;
@@ -33,6 +35,7 @@ import com.woha.control.system.service.IExternalWohaUserService;
  * @author luowenshen
  */
 @Service
+@DataSource(DataSourceType.SLAVE)
 public class ExternalManagerAccountServiceImpl implements IExternalManagerAccountService
 {
     private static final int LOGIN_MAX_FAILURE_COUNT = 5;

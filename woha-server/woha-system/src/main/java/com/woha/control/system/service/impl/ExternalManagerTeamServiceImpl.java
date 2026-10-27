@@ -34,6 +34,7 @@ public class ExternalManagerTeamServiceImpl implements IExternalManagerTeamServi
     { this.accountMapper = accountMapper; this.metricMapper = metricMapper; }
 
     @Override
+    @DataSource(DataSourceType.SLAVE)
     public List<Long> resolveVisibleAccountIds(ExternalManagerAccount current)
     {
         List<ExternalManagerAccount> accounts = accountMapper.selectAccountSummariesByRegion(current.getRegionId());
@@ -46,6 +47,7 @@ public class ExternalManagerTeamServiceImpl implements IExternalManagerTeamServi
     }
 
     @Override
+    @DataSource(DataSourceType.SLAVE)
     public List<ExternalManagerAccount> selectTeamMembers(List<Long> ids, String loginName, String roleCode, String status)
     { return ids.isEmpty() ? List.of() : accountMapper.selectTeamAccountList(ids, loginName, roleCode, status); }
 

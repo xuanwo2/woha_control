@@ -57,10 +57,6 @@ CREATE TABLE `external_gift_pack_issue` (
     KEY `idx_external_gift_pack_issue_receiver_time` (`receiver_uid`, `create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='外管礼包发放记录';
 
-INSERT IGNORE INTO sys_menu VALUES
-('2003', '外管礼包', '0', '7', 'external-gift-pack', 'external/GiftPack', '', '', 1, 0, 'C', '0', '0', 'external:giftPack:list', 'external-gift-pack', 'admin', sysdate(), '', null, '外管礼包一级菜单');
-INSERT IGNORE INTO sys_role_menu (role_id, menu_id) VALUES (1, 2003);
-
 CREATE TABLE `external_chat_no_pool` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '靓号池主键',
     `chat_no` BIGINT NOT NULL COMMENT '靓号',
@@ -92,6 +88,3 @@ CREATE TABLE `external_operation_log` (
     KEY `idx_external_operation_log_type_time` (`operation_type`, `create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='外管操作记录';
 
-INSERT IGNORE INTO sys_menu VALUES
-('2005', '外管操作记录', '0', '9', 'external-operation-log', 'external/OperationLog', '', '', 1, 0, 'C', '0', '0', 'external:operationLog:list', 'form', 'admin', sysdate(), '', null, '外管操作记录菜单');
-INSERT IGNORE INTO sys_role_menu (role_id, menu_id) VALUES (1, 2005);
