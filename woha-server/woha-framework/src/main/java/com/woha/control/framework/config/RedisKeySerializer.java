@@ -13,7 +13,7 @@ import org.springframework.data.redis.serializer.SerializationException;
 public class RedisKeySerializer implements RedisSerializer<Object>
 {
     /** BI 系统所有 Redis key 的统一前缀。 */
-    public static final String KEY_PREFIX = "bi:";
+    public static final String KEY_PREFIX = "control:";
 
     /** Redis key 使用的字符编码。 */
     private static final Charset KEY_CHARSET = StandardCharsets.UTF_8;
