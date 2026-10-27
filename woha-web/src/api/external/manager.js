@@ -36,6 +36,8 @@ export const addExternalSubordinate = (data) => request({ url: '/external/team/s
 export const listExternalGuildResponsibles = () => request({ url: '/external/guild/responsibles', method: 'get' })
 /** 新建公会 */
 export const createExternalGuild = (data) => request({ url: '/external/guild', method: 'post', data })
+/** 查询新建公会会长信息 */
+export const getExternalGuildCaptainPreview = (chatNo) => request({ url: '/external/guild/captain-preview', method: 'get', params: { chatNo } })
 /** 查询公会列表 */
 export const listExternalGuild = (params) => request({ url: '/external/guild/list', method: 'get', params })
 /** 查询公会流水汇总 */

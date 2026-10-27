@@ -1,6 +1,7 @@
 package com.woha.control.system.service;
 
 import java.util.List;
+import com.woha.control.system.domain.external.ExternalGuildCaptainPreview;
 import com.woha.control.system.domain.external.ExternalGuildCreateRequest;
 import com.woha.control.system.domain.external.ExternalGuildFlowSummary;
 import com.woha.control.system.domain.external.ExternalGuildQuery;
@@ -14,6 +15,9 @@ import com.woha.control.system.domain.external.ExternalManagerAccount;
  */
 public interface IExternalGuildService
 {
+    /** 查询新建公会会长预览信息 */
+    ExternalGuildCaptainPreview selectCaptainPreview(Long chatNo, Integer regionId);
+
     /** 创建公会 */
     Long createGuild(ExternalGuildCreateRequest request, ExternalManagerAccount responsible);
 

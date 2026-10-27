@@ -11,6 +11,7 @@ import com.woha.control.common.annotation.DataSource;
 import com.woha.control.common.enums.DataSourceType;
 import com.woha.control.common.exception.ServiceException;
 import com.woha.control.system.domain.external.ExternalGuildCreateRequest;
+import com.woha.control.system.domain.external.ExternalGuildCaptainPreview;
 import com.woha.control.system.domain.external.ExternalGuildFlowSummary;
 import com.woha.control.system.domain.external.ExternalGuildQuery;
 import com.woha.control.system.domain.external.ExternalGuildVO;
@@ -38,6 +39,28 @@ public class ExternalGuildServiceImpl implements IExternalGuildService
     public ExternalGuildServiceImpl(ExternalGuildMapper guildMapper)
     {
         this.guildMapper = guildMapper;
+    }
+
+    /** 查询新建公会会长预览信息 */
+    @Override
+    @DataSource(DataSourceType.SLAVE)
+    public ExternalGuildCaptainPreview selectCaptainPreview(Long chatNo, Integer regionId)
+    {
+        checkSlaveEnabled();
+        ExternalGuildCaptainPreview preview = guildMapper.selectCaptainPreview(chatNo);
+        if (preview == null)
+        {
+            preview = new ExternalGuildCaptainPreview();
+            preview.setChatNo(chatNo);
+            preview.setRegistered(false);
+            preview.setInCurrentRegion(false);
+            preview.setJoinedFamily(false);
+            return preview;
+        }
+        preview.setRegistered(true);
+        preview.setInCurrentRegion(regionId.equals(preview.getRegionId()));
+        preview.setJoinedFamily(guildMapper.countFamilyMemberByUid(preview.getUid()) > 0);
+        return preview;
     }
 
     @Override

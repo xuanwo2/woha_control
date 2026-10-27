@@ -5,6 +5,10 @@
         select uid, chat_no, region_id from `user` where chat_no = #{chatNo} limit 1 for update
     </select>
 
+    <select id="selectCaptainPreview" resultType="ExternalGuildCaptainPreview">
+        select uid, chat_no, nickname, region_id from `user` where chat_no = #{chatNo} limit 1
+    </select>
+
     <select id="countFamilyMemberByUid" resultType="int">
         select count(1) from fm_family_user where uid = #{uid}
     </select>

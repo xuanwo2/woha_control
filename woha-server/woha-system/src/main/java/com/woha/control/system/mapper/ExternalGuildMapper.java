@@ -4,6 +4,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import com.woha.control.system.domain.external.ExternalGuildCreateRequest;
+import com.woha.control.system.domain.external.ExternalGuildCaptainPreview;
 import com.woha.control.system.domain.external.ExternalGuildFlowSummary;
 import com.woha.control.system.domain.external.ExternalGuildQuery;
 import com.woha.control.system.domain.external.ExternalGuildVO;
@@ -19,6 +20,9 @@ public interface ExternalGuildMapper
 {
     /** 查询原业务用户并锁定 */
     ExternalWohaUser selectWohaUserForUpdate(@Param("chatNo") Long chatNo);
+
+    /** 查询新建公会会长预览信息 */
+    ExternalGuildCaptainPreview selectCaptainPreview(@Param("chatNo") Long chatNo);
 
     /** 查询用户是否已加入公会 */
     int countFamilyMemberByUid(@Param("uid") Long uid);

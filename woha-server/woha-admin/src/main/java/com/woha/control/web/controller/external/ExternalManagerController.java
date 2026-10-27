@@ -301,6 +301,14 @@ public class ExternalManagerController extends BaseController
         return AjaxResult.success(accounts);
     }
 
+    /** 查询新建公会会长预览信息 */
+    @GetMapping("/guild/captain-preview")
+    public AjaxResult guildCaptainPreview(@RequestParam Long chatNo)
+    {
+        ExternalManagerAccount current = accountService.selectAccountById(currentAccountId());
+        return AjaxResult.success(guildService.selectCaptainPreview(chatNo, current.getRegionId()));
+    }
+
     /** 创建外管公会 */
     @PostMapping("/guild")
     public AjaxResult createGuild(@Valid @RequestBody ExternalGuildCreateRequest request)
