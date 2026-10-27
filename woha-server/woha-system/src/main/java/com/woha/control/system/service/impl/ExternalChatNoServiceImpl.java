@@ -26,13 +26,15 @@ public class ExternalChatNoServiceImpl implements IExternalChatNoService
     private final ExternalChatNoMapper chatNoMapper;
     private final IExternalWohaUserService wohaUserService;
     private final ExternalChatNoBusinessService businessService;
+    private final ExternalIchatUserCacheService ichatUserCacheService;
 
     public ExternalChatNoServiceImpl(ExternalChatNoMapper chatNoMapper, IExternalWohaUserService wohaUserService,
-            ExternalChatNoBusinessService businessService)
+            ExternalChatNoBusinessService businessService, ExternalIchatUserCacheService ichatUserCacheService)
     {
         this.chatNoMapper = chatNoMapper;
         this.wohaUserService = wohaUserService;
         this.businessService = businessService;
+        this.ichatUserCacheService = ichatUserCacheService;
     }
 
     @Override
@@ -86,6 +88,7 @@ public class ExternalChatNoServiceImpl implements IExternalChatNoService
             throw new ServiceException("靓号不存在或不可分配");
         }
         ExternalWohaUser receiver = businessService.assign(request.getReceiverChatNo(), request.getChatNo(), request.getDayNum(), account.getRegionId());
+        ichatUserCacheService.evictUserCache(receiver.getUid());
         if (chatNoMapper.assignPool(request.getChatNo(), receiver.getUid(), receiver.getChatNo(), request.getDayNum()) != 1)
         {
             throw new ServiceException("靓号状态更新失败");
