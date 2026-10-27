@@ -15,18 +15,26 @@
         <result property="vipLevel" column="vip_level"/><result property="dayNum" column="day_num"/>
         <result property="quantity" column="quantity"/><result property="sortNo" column="sort_no"/>
     </resultMap>
+    <resultMap id="giftQuotaResult" type="ExternalGiftPackQuota">
+        <result property="accountId" column="account_id"/>
+        <result property="loginName" column="login_name"/>
+        <result property="giftId" column="gift_id"/>
+        <result property="giftName" column="gift_name"/>
+        <result property="quotaCount" column="quota_count"/>
+        <result property="usedCount" column="used_count"/>
+    </resultMap>
     <select id="selectGiftPackList" resultMap="giftPackResult">
-        select id, gift_name, gold_amount, receive_limit, status, create_time from external_gift_pack
-        <if test="status != null and status != ''">where status = #{status}</if> order by id desc
+        select id, gift_name, gold_amount, receive_limit, coalesce(nullif(status, ''), '0') as status, create_time from external_gift_pack
+        <if test="status != null and status != ''">where coalesce(nullif(status, ''), '0') = #{status}</if> order by id desc
     </select>
-    <select id="selectGiftPackById" resultMap="giftPackResult">select id, gift_name, gold_amount, receive_limit, status, create_time from external_gift_pack where id = #{id}</select>
+    <select id="selectGiftPackById" resultMap="giftPackResult">select id, gift_name, gold_amount, receive_limit, coalesce(nullif(status, ''), '0') as status, create_time from external_gift_pack where id = #{id}</select>
     <select id="selectItemsByGiftId" resultMap="giftItemResult">select id, gift_id, item_type, prop_id, vip_level, day_num, quantity, sort_no from external_gift_pack_item where gift_id = #{giftId} order by sort_no, id</select>
     <select id="selectItemsByGiftIds" resultMap="giftItemResult">select id, gift_id, item_type, prop_id, vip_level, day_num, quantity, sort_no from external_gift_pack_item where gift_id in <foreach collection="giftIds" item="giftId" open="(" separator="," close=")">#{giftId}</foreach> order by gift_id, sort_no, id</select>
     <insert id="insertGiftPack" useGeneratedKeys="true" keyProperty="id">insert into external_gift_pack(gift_name,gold_amount,receive_limit,status,create_by,update_by) values(#{giftName},#{goldAmount},#{receiveLimit},#{status},#{createBy},#{updateBy})</insert>
     <update id="updateGiftPack">update external_gift_pack set gift_name=#{giftName},gold_amount=#{goldAmount},receive_limit=#{receiveLimit},status=#{status},update_by=#{updateBy} where id=#{id}</update>
     <delete id="deleteItemsByGiftId">delete from external_gift_pack_item where gift_id = #{giftId}</delete>
     <insert id="insertItems">insert into external_gift_pack_item(gift_id,item_type,prop_id,vip_level,day_num,quantity,sort_no) values <foreach collection="items" item="item" separator=",">(#{item.giftId},#{item.itemType},#{item.propId},#{item.vipLevel},#{item.dayNum},#{item.quantity},#{item.sortNo})</foreach></insert>
-    <select id="selectQuotaList" resultType="ExternalGiftPackQuota">select q.account_id, a.login_name, q.gift_id, g.gift_name, q.quota_count, q.used_count from external_gift_pack_quota q join external_manager_account a on a.id=q.account_id join external_gift_pack g on g.id=q.gift_id <if test="accountId != null">where q.account_id=#{accountId}</if> order by q.account_id,g.id</select>
+    <select id="selectQuotaList" resultMap="giftQuotaResult">select q.account_id, a.login_name, q.gift_id, g.gift_name, q.quota_count, q.used_count from external_gift_pack_quota q join external_manager_account a on a.id=q.account_id join external_gift_pack g on g.id=q.gift_id <if test="accountId != null">where q.account_id=#{accountId}</if> order by q.account_id,g.id</select>
     <insert id="saveQuota">insert into external_gift_pack_quota(account_id,gift_id,quota_count,used_count) values(#{accountId},#{giftId},#{quotaCount},0) on duplicate key update quota_count=#{quotaCount}</insert>
     <update id="consumeQuota">update external_gift_pack_quota set used_count=used_count+1 where account_id=#{accountId} and gift_id=#{giftId} and used_count &lt; quota_count</update>
     <select id="countReceiverIssues" resultType="int">select count(1) from external_gift_pack_issue where gift_id=#{giftId} and receiver_uid=#{receiverUid} and status='0'</select>

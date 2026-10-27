@@ -579,12 +579,11 @@ public class ExternalManagerController extends BaseController
             throw new ServiceException("外管登录状态无效");
         }
         ExternalLoginUser loginUser = (ExternalLoginUser) authentication.getPrincipal();
-        List<ExternalManagerAccount> accounts = accountService.selectAccountList(loginUser.getLoginName(), null, null, null, null, null, null);
-        if (accounts.isEmpty())
+        if (loginUser.getAccountId() == null)
         {
-            throw new ServiceException("外管账号不存在");
+            throw new ServiceException("外管登录状态无效");
         }
-        return accounts.get(0).getId();
+        return loginUser.getAccountId();
     }
 
     /** 校验当前外管账号为超级管理员 */

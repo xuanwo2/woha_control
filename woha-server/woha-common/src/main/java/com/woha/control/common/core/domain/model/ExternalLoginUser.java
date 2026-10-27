@@ -32,9 +32,15 @@ public class ExternalLoginUser implements UserDetails, Serializable
 
     public Long getAccountId() { return accountId; }
 
+    public void setAccountId(Long accountId) { this.accountId = accountId; }
+
     public String getLoginName() { return loginName; }
 
+    public void setLoginName(String loginName) { this.loginName = loginName; }
+
     public boolean isPasswordChangeRequired() { return passwordChangeRequired; }
+
+    public void setPasswordChangeRequired(boolean passwordChangeRequired) { this.passwordChangeRequired = passwordChangeRequired; }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() { return Collections.emptySet(); }

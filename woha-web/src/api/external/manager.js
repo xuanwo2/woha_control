@@ -45,7 +45,7 @@ export const listExternalGiftPacks = (params) => request({ url: '/external/gift-
 /** 保存外管礼包 */
 export const saveExternalGiftPack = (data) => request({ url: '/external/gift-packs', method: 'post', data, headers: { externalToken: false } })
 /** 查询外管礼包额度 */
-export const listExternalGiftPackQuotas = (params) => request({ url: '/external/gift-packs/quotas', method: 'get', params })
+export const listExternalGiftPackQuotas = (params, config = {}) => request({ url: '/external/gift-packs/quotas', method: 'get', params, ...config })
 /** 保存外管礼包额度 */
 export const saveExternalGiftPackQuota = (data) => request({ url: '/external/gift-packs/quotas', method: 'put', data, headers: { externalToken: false } })
 /** 发放外管礼包 */

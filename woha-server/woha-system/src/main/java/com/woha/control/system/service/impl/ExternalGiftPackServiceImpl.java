@@ -161,6 +161,10 @@ public class ExternalGiftPackServiceImpl implements IExternalGiftPackService
     /** 校验礼包配置 */
     private void validateGiftPack(ExternalGiftPack giftPack)
     {
+        if (!"0".equals(giftPack.getStatus()) && !"1".equals(giftPack.getStatus()))
+        {
+            throw new ServiceException("礼包状态不合法");
+        }
         if (giftPack.getGiftName() == null || giftPack.getGiftName().isBlank() || giftPack.getGoldAmount() == null
                 || giftPack.getGoldAmount() < 0 || giftPack.getReceiveLimit() == null || giftPack.getReceiveLimit() < 1
                 || giftPack.getItems() == null || giftPack.getItems().isEmpty())

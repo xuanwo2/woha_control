@@ -7,7 +7,7 @@
       <h2>赠送礼包</h2>
       <el-form label-width="86px" class="issue-form">
         <el-form-item label="用户 Woha ID"><el-input v-model.number="form.receiverChatNo" placeholder="请输入用户 Woha ID" /></el-form-item>
-        <el-form-item label="礼包"><el-select v-model="form.giftId" placeholder="请选择礼包"><el-option v-for="item in enabledPacks" :key="item.id" :label="item.giftName" :value="item.id" /></el-select></el-form-item>
+        <el-form-item label="礼包"><el-select v-model="form.giftId" placeholder="请选择礼包"><el-option v-for="item in configuredPacks" :key="item.id" :label="packOptionLabel(item)" :value="item.id" :disabled="item.quotaCount <= item.usedCount" /></el-select></el-form-item>
         <el-form-item label="内容"><span class="content-text">{{ selectedPack?.content || selectedPack?.giftName || '--' }}</span></el-form-item>
         <el-form-item><el-button type="primary" :loading="issuing" @click="issue">赠送</el-button></el-form-item>
       </el-form>
@@ -42,12 +42,12 @@ const configuredPacks = computed(() => packs.value.map(pack => {
     usedCount: quota?.usedCount || 0
   }
 }))
-const enabledPacks = computed(() => configuredPacks.value.filter(item => item.status === '0' && item.quotaCount > item.usedCount))
 const selectedPack = computed(() => configuredPacks.value.find(item => item.id === form.giftId))
 const quotaText = giftId => { const item = configuredPacks.value.find(value => value.id === giftId); return item ? `${Math.max(0, item.quotaCount - item.usedCount)} / ${item.quotaCount}` : '0 / 0' }
+const packOptionLabel = item => item.quotaCount <= item.usedCount ? `${item.giftName}（额度不足）` : item.giftName
 
 async function load() {
-  const [packRes, quotaRes, issueRes] = await Promise.all([listExternalGiftPacks(), listExternalGiftPackQuotas(), listExternalGiftPackIssues()])
+  const [packRes, quotaRes, issueRes] = await Promise.all([listExternalGiftPacks({ status: '0' }), listExternalGiftPackQuotas(), listExternalGiftPackIssues()])
   packs.value = packRes.data || []
   quotas.value = quotaRes.data || []
   issues.value = issueRes.data || []
@@ -55,6 +55,7 @@ async function load() {
 
 async function issue() {
   if (!form.receiverChatNo || !form.giftId) return ElMessage.warning('请填写用户 Woha ID 并选择礼包')
+  if (!selectedPack.value || selectedPack.value.quotaCount <= selectedPack.value.usedCount) return ElMessage.warning('当前礼包额度不足，请在管理后台为该外管账号配置可赠份数')
   issuing.value = true
   try {
     await issueExternalGiftPack(form)
