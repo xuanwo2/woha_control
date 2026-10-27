@@ -9,16 +9,20 @@
         select count(1) from fm_family_user where uid = #{uid}
     </select>
 
-    <select id="selectFamilyId" resultType="java.lang.Long">select uuid_short()</select>
+    <select id="countFamilyByNo" resultType="int">
+        select count(1) from fm_family where family_no = #{familyNo}
+    </select>
 
     <insert id="insertFamily">
         insert into fm_family
-        (family_id, family_no, uid, responsible_uid, family_name, family_logo, status, create_time, update_time,
+        (family_no, uid, responsible_uid, family_name, family_logo, status, create_time, update_time,
          user_num, room_num, family_room_num, whatsapp, create_source, region_id)
         values
-        (#{familyId}, #{familyId}, #{captainUid}, #{responsibleUid}, #{request.familyName}, #{request.familyLogo}, 1, now(), now(),
+        (#{familyNo}, #{captainUid}, #{responsibleUid}, #{request.familyName}, #{request.familyLogo}, 1, now(), now(),
          1, 0, 0, #{request.whatsapp}, 0, #{regionId})
     </insert>
+
+    <select id="selectLastInsertId" resultType="java.lang.Long">select last_insert_id()</select>
 
     <insert id="insertCaptainMember">
         insert into fm_family_user

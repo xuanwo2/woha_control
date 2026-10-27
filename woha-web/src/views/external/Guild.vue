@@ -24,7 +24,7 @@
       <el-form ref="formRef" :model="form" :rules="rules" label-width="115px">
         <el-form-item label="会长 Woha ID" prop="captainChatNo"><el-input v-model.number="form.captainChatNo" /></el-form-item>
         <el-form-item label="公会名称" prop="familyName"><el-input v-model="form.familyName" maxlength="30" show-word-limit /></el-form-item>
-        <el-form-item label="公会封面"><el-upload :action="uploadUrl" :headers="uploadHeaders" :show-file-list="false" accept="image/png,image/jpeg" :before-upload="beforeUpload" :on-success="uploadSuccess"><el-button>上传图片</el-button></el-upload><el-image v-if="form.familyLogo" :src="form.familyLogo" fit="cover" class="cover" /></el-form-item>
+        <el-form-item label="公会封面"><el-upload :action="uploadUrl" name="uploadFile" :headers="uploadHeaders" :show-file-list="false" accept="image/png,image/jpeg" :before-upload="beforeUpload" :on-success="uploadSuccess"><el-button>上传图片</el-button></el-upload><el-image v-if="form.familyLogo" :src="form.familyLogo" fit="cover" class="cover" /></el-form-item>
         <el-form-item label="会长 WhatsApp"><el-input v-model="form.whatsapp" /></el-form-item>
         <el-form-item label="负责人" prop="responsibleAccountId"><el-select v-model="form.responsibleAccountId" placeholder="请选择负责人" class="full"><el-option v-for="item in responsibles" :key="item.id" :label="responsibleLabel(item)" :value="item.id" /></el-select></el-form-item>
       </el-form>
@@ -44,7 +44,7 @@ const responsibles = ref([])
 const query = reactive({ pageNum: 1, pageSize: 10, keyword: '', responsibleWohaUid: undefined, createSource: undefined })
 const form = reactive({ captainChatNo: undefined, familyName: '', familyLogo: '', whatsapp: '', responsibleAccountId: undefined })
 const rules = { captainChatNo: [{ required: true, message: '请输入会长 Woha ID', trigger: 'blur' }], familyName: [{ required: true, message: '请输入公会名称', trigger: 'blur' }], responsibleAccountId: [{ required: true, message: '请选择负责人', trigger: 'change' }] }
-const uploadUrl = `${import.meta.env.VITE_APP_BASE_API}/common/upload`
+const uploadUrl = `${import.meta.env.VITE_APP_BASE_API}/upload/img.action`
 const uploadHeaders = computed(() => ({ 'X-External-Token': getExternalToken() }))
 const number = value => Number(value || 0).toLocaleString()
 const responsibleLabel = item => `${item.realName || item.loginName}（${item.wohaChatNo || item.wohaUid}）`
@@ -54,7 +54,7 @@ async function load() { loading.value = true; try { const res = await listExtern
 function reset() { Object.assign(query, { pageNum: 1, keyword: '', responsibleWohaUid: undefined, createSource: undefined }); load() }
 async function openCreate() { Object.assign(form, { captainChatNo: undefined, familyName: '', familyLogo: '', whatsapp: '', responsibleAccountId: undefined }); await loadResponsibles(); visible.value = true }
 function beforeUpload(file) { if (file.size / 1024 / 1024 > 5) { ElMessage.error('封面图片不能超过5MB'); return false } return true }
-function uploadSuccess(res) { if (res.code !== 200) { ElMessage.error(res.msg || '图片上传失败'); return } form.familyLogo = res.url }
+function uploadSuccess(res) { if (res.code !== 200 || !res.path) { ElMessage.error(res.msg || '图片上传失败'); return } form.familyLogo = res.path }
 function submit() { formRef.value.validate(async valid => { if (!valid) return; submitting.value = true; try { await createExternalGuild(form); ElMessage.success('公会创建成功'); visible.value = false; load() } finally { submitting.value = false } }) }
 function exportData() { proxy.download('external/guild/export', { keyword: query.keyword, responsibleWohaUid: query.responsibleWohaUid, createSource: query.createSource }, `公会数据_${Date.now()}.xlsx`) }
 loadResponsibles(); load()

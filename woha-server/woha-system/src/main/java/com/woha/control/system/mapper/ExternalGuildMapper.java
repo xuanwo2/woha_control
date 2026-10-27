@@ -23,13 +23,16 @@ public interface ExternalGuildMapper
     /** 查询用户是否已加入公会 */
     int countFamilyMemberByUid(@Param("uid") Long uid);
 
-    /** 生成原业务公会编号 */
-    Long selectFamilyId();
+    /** 查询公会号是否存在 */
+    int countFamilyByNo(@Param("familyNo") Long familyNo);
 
     /** 创建公会 */
-    int insertFamily(@Param("familyId") Long familyId, @Param("captainUid") Long captainUid,
+    int insertFamily(@Param("familyNo") Long familyNo, @Param("captainUid") Long captainUid,
             @Param("responsibleUid") Long responsibleUid, @Param("regionId") Integer regionId,
             @Param("request") ExternalGuildCreateRequest request);
+
+    /** 查询当前连接最近生成的公会主键 */
+    Long selectLastInsertId();
 
     /** 创建会长成员关系 */
     int insertCaptainMember(@Param("familyId") Long familyId, @Param("captainUid") Long captainUid,

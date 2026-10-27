@@ -154,3 +154,14 @@ xss:
   excludes: /system/notice
   # 匹配链接
   urlPatterns: /system/*,/monitor/*,/tool/*
+
+# 腾讯云对象存储配置，敏感信息由部署环境变量提供
+external:
+  tencent:
+    cos:
+      app-id: ${TENCENT_COS_APP_ID:1394843931}
+      secret-id: ${TENCENT_COS_SECRET_ID:IKIDOl8SfjghprtqfLuNiw10rZ8aw9EXqHdv}
+      secret-key: ${TENCENT_COS_SECRET_KEY:lbKuT3c5sHakpmaFoFZntsjYHvXM7nOr}
+      bucket: ${TENCENT_COS_BUCKET:woha-1394843931}
+      region: ${TENCENT_COS_REGION:ap-singapore}
+      url: ${TENCENT_COS_URL:https://pic.woha.live/}

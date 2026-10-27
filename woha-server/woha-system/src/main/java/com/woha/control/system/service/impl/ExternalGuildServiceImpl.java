@@ -3,6 +3,7 @@ package com.woha.control.system.service.impl;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,9 @@ import com.woha.control.system.service.IExternalGuildService;
 @Service
 public class ExternalGuildServiceImpl implements IExternalGuildService
 {
+    /** 公会号随机生成次数，保持原业务规则 */
+    private static final int FAMILY_NO_GENERATE_TIMES = 20;
+
     private final ExternalGuildMapper guildMapper;
 
     @Value("${spring.datasource.druid.slave.enabled:false}")
@@ -55,12 +59,26 @@ public class ExternalGuildServiceImpl implements IExternalGuildService
         {
             throw new ServiceException("该用户已加入公会，不能创建公会");
         }
-        Long familyId = guildMapper.selectFamilyId();
-        if (familyId == null)
+        Long familyNo = null;
+        for (int index = 0; index < FAMILY_NO_GENERATE_TIMES; index++)
         {
-            throw new ServiceException("生成公会编号失败");
+            long candidate = ThreadLocalRandom.current().nextLong(2000, 9999);
+            if (guildMapper.countFamilyByNo(candidate) == 0)
+            {
+                familyNo = candidate;
+                break;
+            }
         }
-        guildMapper.insertFamily(familyId, captain.getUid(), responsible.getWohaUid(), responsible.getRegionId(), request);
+        if (familyNo == null)
+        {
+            throw new ServiceException("生成公会号异常");
+        }
+        guildMapper.insertFamily(familyNo, captain.getUid(), responsible.getWohaUid(), responsible.getRegionId(), request);
+        Long familyId = guildMapper.selectLastInsertId();
+        if (familyId == null || familyId <= 0)
+        {
+            throw new ServiceException("生成公会主键失败");
+        }
         guildMapper.insertCaptainMember(familyId, captain.getUid(), responsible.getRegionId());
         return familyId;
     }
