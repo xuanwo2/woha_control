@@ -6,7 +6,7 @@
         <div><span>可执行</span><strong>{{ canBan ? '账号封禁' : '无' }}</strong></div>
         <div><span>最长时长</span><strong>7 天</strong></div>
         <div><span>每日上限</span><strong>10 次</strong></div>
-        <div><span>对象范围</span><strong>本团队公会成员</strong></div>
+        <div><span>对象范围</span><strong>本团队下级或公会成员</strong></div>
       </div>
     </section>
 

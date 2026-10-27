@@ -28,5 +28,30 @@ public class ExternalAccountBanServiceImpl implements IExternalAccountBanService
     public void ban(ExternalManagerAccount account, ExternalAccountBanRequest request) { validate(account, request.getChatNo()); if (logMapper.countToday(account.getId(), "BAN") >= 10) throw new ServiceException("今日封禁次数已达上限"); ExternalWohaUser user=businessService.selectUser(request.getChatNo()); businessService.ban(user.getUid(),user.getChatNo(),request.getDayNum(),request.getReason(),account.getRegionId()); logService.record(account,"BAN",String.valueOf(request.getChatNo()),request.getReason()+"，"+request.getDayNum()+"天"); }
     @Override
     public void release(ExternalManagerAccount account, Long chatNo) { validate(account, chatNo); businessService.release(chatNo); logService.record(account,"UNBAN",String.valueOf(chatNo),"提前解除封禁"); }
-    private void validate(ExternalManagerAccount account, Long chatNo) { if (account.getPermissions()==null || !List.of(account.getPermissions().split(",")).contains(ExternalManagerPermission.EXECUTE_BAN.name())) throw new ServiceException("当前账号没有执行封禁权限"); ExternalWohaUser user=businessService.selectUser(chatNo); if (user==null || !account.getRegionId().equals(user.getRegionId())) throw new ServiceException("用户不存在或不属于当前大区"); Long responsibleUid=businessService.selectResponsibleUid(user.getUid()); List<Long> visible=teamService.selectTeamMembers(teamService.resolveVisibleAccountIds(account),null,null,"0").stream().map(ExternalManagerAccount::getWohaUid).toList(); if (responsibleUid==null || !visible.contains(responsibleUid)) throw new ServiceException("仅可封禁本团队公会成员"); }
+    private void validate(ExternalManagerAccount account, Long chatNo)
+    {
+        if (account.getPermissions() == null || !List.of(account.getPermissions().split(",")).contains(ExternalManagerPermission.EXECUTE_BAN.name()))
+        {
+            throw new ServiceException("当前账号没有执行封禁权限");
+        }
+        ExternalWohaUser user = businessService.selectUser(chatNo);
+        if (user == null || !account.getRegionId().equals(user.getRegionId()))
+        {
+            throw new ServiceException("用户不存在或不属于当前大区");
+        }
+        List<ExternalManagerAccount> team = teamService.selectTeamMembers(teamService.resolveVisibleAccountIds(account), null, null, "0");
+        boolean isSubordinate = team.stream().anyMatch(member -> !account.getId().equals(member.getId())
+                && user.getUid().equals(member.getWohaUid()));
+        if (isSubordinate)
+        {
+            return;
+        }
+        Long responsibleUid = businessService.selectResponsibleUid(user.getUid());
+        boolean isGuildMember = responsibleUid != null && team.stream()
+                .anyMatch(member -> responsibleUid.equals(member.getWohaUid()));
+        if (!isGuildMember)
+        {
+            throw new ServiceException("仅可封禁本团队下级或公会成员");
+        }
+    }
 }
