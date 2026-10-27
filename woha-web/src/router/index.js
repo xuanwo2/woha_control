@@ -71,10 +71,8 @@ export const constantRoutes = [
   },
   {
     path: '/external-workbench',
-    component: () => import('@/views/external/Layout.vue'),
-    children: [
-      { path: '', component: () => import('@/views/external/Workbench.vue') }
-    ]
+    redirect: '/external/workbench',
+    hidden: true
   },
   {
     path: '/register',

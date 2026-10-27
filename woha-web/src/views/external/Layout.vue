@@ -1,7 +1,7 @@
 <template>
   <div class="external-layout">
     <header><strong>Woha 外管后台</strong><span class="hint">外管使用，独立网址与账号，与 Woha 管理后台分开</span><span class="profile">{{ profile.realName || profile.loginName }} · {{ roleName }}</span><el-button link @click="logout">退出</el-button></header>
-    <aside><RouterLink to="/external-workbench">工作台</RouterLink><RouterLink to="/external/team">团队管理</RouterLink><RouterLink to="/external/guild">公会管理</RouterLink><RouterLink to="/external/guild-flow">公会流水</RouterLink><RouterLink to="/external/gift">礼包赠送</RouterLink><RouterLink to="/external/chat-no">靓号</RouterLink><RouterLink to="/external/account-ban">账号封禁</RouterLink><RouterLink to="/external/export">数据导出</RouterLink></aside>
+    <aside><RouterLink to="/external/workbench">工作台</RouterLink><RouterLink to="/external/team">团队管理</RouterLink><RouterLink to="/external/guild">公会管理</RouterLink><RouterLink to="/external/guild-flow">公会流水</RouterLink><RouterLink to="/external/gift">礼包赠送</RouterLink><RouterLink to="/external/chat-no">靓号</RouterLink><RouterLink to="/external/account-ban">账号封禁</RouterLink><RouterLink to="/external/export">数据导出</RouterLink></aside>
     <main><RouterView /></main>
   </div>
 </template>
