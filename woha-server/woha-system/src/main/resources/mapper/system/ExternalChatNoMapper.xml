@@ -2,6 +2,8 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.woha.control.system.mapper.ExternalChatNoMapper">
     <select id="selectPoolList" resultType="ExternalChatNoPool">select id,chat_no,account_id,receiver_uid,previous_chat_no,expire_time,status from external_chat_no_pool <if test="accountId != null">where account_id=#{accountId}</if> order by status,chat_no</select>
+    <select id="countPoolByAccountId" resultType="int">select count(1) from external_chat_no_pool where account_id=#{accountId}</select>
+    <select id="countAvailablePoolByAccountId" resultType="int">select count(1) from external_chat_no_pool where account_id=#{accountId} and status='0'</select>
     <select id="selectPoolForUpdate" resultType="ExternalChatNoPool">select id,chat_no,account_id,receiver_uid,previous_chat_no,expire_time,status from external_chat_no_pool where chat_no=#{chatNo} for update</select>
     <insert id="insertPool">insert into external_chat_no_pool(chat_no,account_id,status) values(#{chatNo},#{accountId},'0')</insert>
     <delete id="deleteAvailablePool">delete from external_chat_no_pool where account_id=#{accountId} and chat_no=#{chatNo} and status='0'</delete>

@@ -43,6 +43,20 @@ public class ExternalChatNoServiceImpl implements IExternalChatNoService
         return chatNoMapper.selectPoolList(accountId);
     }
 
+    /** 统计账号靓号总数 */
+    @Override
+    public int countPoolByAccountId(Long accountId)
+    {
+        return chatNoMapper.countPoolByAccountId(accountId);
+    }
+
+    /** 统计账号可用靓号数 */
+    @Override
+    public int countAvailablePoolByAccountId(Long accountId)
+    {
+        return chatNoMapper.countAvailablePoolByAccountId(accountId);
+    }
+
     @Override
     public void addPool(ExternalChatNoPoolSaveRequest request)
     {

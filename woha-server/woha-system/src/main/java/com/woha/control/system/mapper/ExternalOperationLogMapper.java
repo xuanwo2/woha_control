@@ -19,6 +19,8 @@ public interface ExternalOperationLogMapper
     /** 查询操作记录。 */
     List<ExternalOperationLog> selectList(@Param("loginName") String loginName, @Param("superAdminName") String superAdminName,
             @Param("operationType") String operationType, @Param("beginTime") Date beginTime, @Param("endTime") Date endTime);
+    /** 查询账号最近操作记录 */
+    List<ExternalOperationLog> selectLatestByAccountId(@Param("accountId") Long accountId, @Param("limit") int limit);
     /** 删除指定账号新增下级记录。 */
     int deleteSubordinateLogs(@Param("target") String target);
     /** 统计当天指定类型操作次数。 */

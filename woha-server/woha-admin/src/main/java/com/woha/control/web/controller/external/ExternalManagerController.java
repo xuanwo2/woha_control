@@ -269,6 +269,18 @@ public class ExternalManagerController extends BaseController
         long totalFlow = metrics.values().stream().mapToLong(item -> item.getTotalFlow() == null ? 0 : item.getTotalFlow()).sum();
         Map<String, Object> result = new java.util.HashMap<>();
         result.put("bdLeaderCount", accounts.stream().filter(item -> "BD_LEADER".equals(item.getRoleCode())).count()); result.put("bdCount", accounts.stream().filter(item -> "BD".equals(item.getRoleCode())).count()); result.put("guildCount", guildCount); result.put("anchorCount", 0); result.put("dayFlow", dayFlow); result.put("weekFlow", weekFlow); result.put("monthFlow", monthFlow); result.put("totalFlow", totalFlow);
+        result.put("giftPackQuotas", hasPermission(current, ExternalManagerPermission.SEND_GIFT_PACK)
+                ? giftPackService.selectQuotaList(current.getId()) : Collections.emptyList());
+        if (hasPermission(current, ExternalManagerPermission.ASSIGN_CHAT_NO))
+        {
+            result.put("chatNoTotal", chatNoService.countPoolByAccountId(current.getId()));
+            result.put("chatNoAvailable", chatNoService.countAvailablePoolByAccountId(current.getId()));
+        }
+        if (hasPermission(current, ExternalManagerPermission.EXECUTE_BAN))
+        {
+            result.put("todayBanCount", operationLogService.countToday(current.getId(), "BAN"));
+        }
+        result.put("recentOperations", operationLogService.selectLatestByAccountId(current.getId(), 5));
         return AjaxResult.success(result);
     }
 
@@ -635,6 +647,12 @@ public class ExternalManagerController extends BaseController
     private void requirePermission(ExternalManagerAccount account, ExternalManagerPermission permission)
     {
         if (account.getPermissions() == null || !List.of(account.getPermissions().split(",")).contains(permission.name())) throw new ServiceException("当前账号没有导出权限");
+    }
+
+    /** 判断外管账号是否拥有指定功能权限。 */
+    private boolean hasPermission(ExternalManagerAccount account, ExternalManagerPermission permission)
+    {
+        return account.getPermissions() != null && List.of(account.getPermissions().split(",")).contains(permission.name());
     }
 
     /** 获取当前外管登录账号 */

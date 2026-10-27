@@ -45,6 +45,20 @@ public class ExternalOperationLogServiceImpl implements ExternalOperationLogServ
         return logMapper.selectList(loginName, superAdminName, operationType, beginTime, endTime);
     }
 
+    /** 查询账号最近操作记录 */
+    @Override
+    public List<ExternalOperationLog> selectLatestByAccountId(Long accountId, int limit)
+    {
+        return logMapper.selectLatestByAccountId(accountId, limit);
+    }
+
+    /** 统计账号当天指定类型操作次数 */
+    @Override
+    public int countToday(Long accountId, String operationType)
+    {
+        return logMapper.countToday(accountId, operationType);
+    }
+
     @Override
     public void deleteSubordinateLogs(String loginName)
     {

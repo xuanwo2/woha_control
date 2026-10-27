@@ -15,6 +15,10 @@ public interface IExternalChatNoService
 {
     /** 查询账号靓号池。 */
     List<ExternalChatNoPool> selectPoolList(Long accountId);
+    /** 统计账号靓号总数。 */
+    int countPoolByAccountId(Long accountId);
+    /** 统计账号可用靓号数。 */
+    int countAvailablePoolByAccountId(Long accountId);
     /** 管理后台向外管账号划拨靓号。 */
     void addPool(ExternalChatNoPoolSaveRequest request);
     /** 管理后台回收未分配靓号。 */

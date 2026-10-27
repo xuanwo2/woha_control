@@ -6,7 +6,7 @@
       <el-button type="primary" @click="search">查询</el-button><el-button @click="reset">重置</el-button>
     </el-form>
     <section class="summary"><div><span>范围流水</span><strong>{{ number(summary.rangeFlow) }}</strong></div><div><span>周流水</span><strong>{{ number(summary.weekFlow) }}</strong></div><div><span>月流水</span><strong>{{ number(summary.monthFlow) }}</strong></div><div><span>总流水</span><strong>{{ number(summary.totalFlow) }}</strong></div></section>
-    <div class="toolbar"><h2>按公会（金幣）</h2><el-button @click="exportData">导出</el-button></div>
+    <div class="toolbar"><h2>按公会（金币）</h2><el-button @click="exportData">导出</el-button></div>
     <el-table :data="rows" v-loading="loading" border show-summary :summary-method="getSummaries">
       <el-table-column prop="familyName" label="公会" min-width="190"><template #default="{ row }">{{ row.familyName }}（{{ row.familyNo }}）</template></el-table-column><el-table-column prop="responsibleName" label="负责人" min-width="120" /><el-table-column prop="rangeFlow" label="范围流水" min-width="130"><template #default="{ row }">{{ number(row.rangeFlow) }}</template></el-table-column><el-table-column prop="weekFlow" label="周流水" min-width="130"><template #default="{ row }">{{ number(row.weekFlow) }}</template></el-table-column><el-table-column prop="monthFlow" label="月流水" min-width="130"><template #default="{ row }">{{ number(row.monthFlow) }}</template></el-table-column><el-table-column prop="totalFlow" label="总流水" min-width="130"><template #default="{ row }">{{ number(row.totalFlow) }}</template></el-table-column>
     </el-table>

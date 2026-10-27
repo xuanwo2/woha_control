@@ -15,6 +15,10 @@ public interface ExternalChatNoMapper
 {
     /** 查询靓号池 */
     List<ExternalChatNoPool> selectPoolList(@Param("accountId") Long accountId);
+    /** 统计账号靓号总数 */
+    int countPoolByAccountId(@Param("accountId") Long accountId);
+    /** 统计账号可用靓号数 */
+    int countAvailablePoolByAccountId(@Param("accountId") Long accountId);
     /** 锁定靓号池记录 */
     ExternalChatNoPool selectPoolForUpdate(@Param("chatNo") Long chatNo);
     /** 新增靓号池记录 */
