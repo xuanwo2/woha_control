@@ -26,6 +26,12 @@ public interface ExternalGiftBusinessMapper
     /** 写入金币流水 */
     int insertGoldLog(@Param("uid") Long uid, @Param("amount") Long amount, @Param("balance") Long balance,
             @Param("orderId") String orderId, @Param("regionId") Integer regionId, @Param("remark") String remark);
+    /** 写入金币账单 */
+    int insertGoldBill(@Param("uid") Long uid, @Param("amount") Long amount, @Param("orderId") String orderId,
+            @Param("regionId") Integer regionId, @Param("remark") String remark);
+    /** 写入系统赠送金币记录 */
+    int insertSysGoldRecord(@Param("uid") Long uid, @Param("amount") Long amount, @Param("adminId") Long adminId,
+            @Param("orderId") String orderId, @Param("regionId") Integer regionId, @Param("reason") String reason);
     /** 写入装扮 */
     int insertPropGive(@Param("uid") Long uid, @Param("prop") ExternalBusinessProp prop,
             @Param("dayNum") Integer dayNum, @Param("quantity") Integer quantity,

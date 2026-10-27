@@ -149,7 +149,7 @@ public class ExternalGiftPackServiceImpl implements IExternalGiftPackService
         String requestNo = UUID.randomUUID().toString().replace("-", "");
         giftPackMapper.insertIssue(requestNo, giftPack.getId(), account.getId(), receiver.getUid(), account.getRegionId(),
                 grantedCount + 1, buildSnapshot(giftPack));
-        businessService.issue(account.getId(), receiver.getUid(), account.getRegionId(), giftPack);
+        businessService.issue(account.getId(), receiver.getUid(), account.getRegionId(), requestNo, giftPack);
     }
 
     @Override

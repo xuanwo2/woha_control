@@ -6,7 +6,7 @@
 import { externalLogin } from '@/api/external/manager'
 import { setExternalToken } from '@/utils/externalAuth'
 const router = useRouter(); const formRef = ref(); const loading = ref(false); const form = reactive({ loginName: '', password: '' }); const rules = { loginName: [{ required: true, message: '请输入登录账号', trigger: 'blur' }], password: [{ required: true, message: '请输入密码', trigger: 'blur' }] }
-function submit() { formRef.value.validate(async valid => { if (!valid) return; loading.value = true; try { const data = await externalLogin(form); setExternalToken(data.token); router.replace(data.needChangePassword ? '/external/password' : '/external-workbench') } finally { loading.value = false } }) }
+function submit() { formRef.value.validate(async valid => { if (!valid) return; loading.value = true; try { const data = await externalLogin(form); setExternalToken(data.token); router.replace(data.needChangePassword ? '/external/password' : '/external/workbench') } finally { loading.value = false } }) }
 </script>
 
 <style scoped lang="scss">.external-login { min-height: 100%; display: flex; align-items: center; justify-content: center; background: #eef3f8; }.login-card { width: 380px; }.login-card h2 { text-align: center; margin-bottom: 28px; }.full { width: 100%; }</style>

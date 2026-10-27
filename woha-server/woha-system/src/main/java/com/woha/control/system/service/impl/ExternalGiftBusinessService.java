@@ -1,6 +1,5 @@
 package com.woha.control.system.service.impl;
 
-import java.util.UUID;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -61,10 +60,9 @@ public class ExternalGiftBusinessService
     /** 在原业务库发放金币、装扮和待激活VIP卡 */
     @DataSource(DataSourceType.SLAVE)
     @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
-    public void issue(Long accountId, Long receiverUid, Integer regionId, ExternalGiftPack giftPack)
+    public void issue(Long accountId, Long receiverUid, Integer regionId, String requestNo, ExternalGiftPack giftPack)
     {
         String remark = "外管礼包：" + giftPack.getGiftName();
-        String requestNo = UUID.randomUUID().toString().replace("-", "");
         if (giftPack.getGoldAmount() != null && giftPack.getGoldAmount() > 0)
         {
             if (businessMapper.increaseGold(receiverUid, giftPack.getGoldAmount()) != 1)
@@ -73,6 +71,11 @@ public class ExternalGiftBusinessService
             }
             Long balance = businessMapper.selectGoldBalance(receiverUid);
             businessMapper.insertGoldLog(receiverUid, giftPack.getGoldAmount(), balance, requestNo, regionId, remark);
+            if (businessMapper.insertGoldBill(receiverUid, giftPack.getGoldAmount(), requestNo, regionId, remark) != 1)
+            {
+                throw new ServiceException("接收用户不存在");
+            }
+            businessMapper.insertSysGoldRecord(receiverUid, giftPack.getGoldAmount(), accountId, requestNo, regionId, remark);
         }
         for (ExternalGiftPackItem item : giftPack.getItems())
         {
