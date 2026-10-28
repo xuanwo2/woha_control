@@ -277,21 +277,17 @@ public class ExternalManagerAccountServiceImpl implements IExternalManagerAccoun
         }
         validateRole(request.getRoleCode());
         validateRegion(request.getRegionId());
-        ExternalWohaUser user = wohaUserService.selectByChatNo(request.getWohaChatNo());
+        ExternalWohaUser user = wohaUserService.selectByChatNo(request.getWohaChatNo(), request.getRegionId());
         if (user == null)
         {
             throw new ServiceException("关联 Woha 用户不存在");
-        }
-        if (!request.getRegionId().equals(user.getRegionId()))
-        {
-            throw new ServiceException("关联 Woha 用户与外管账号大区不一致");
         }
         List<ExternalManagerAccount> boundAccounts = accountMapper.selectAccountList(null, user.getUid(), null, null, null, null, null);
         if (boundAccounts.stream().anyMatch(item -> !item.getId().equals(accountId)))
         {
             throw new ServiceException("该 Woha 用户已关联其他外管账号");
         }
-        request.setParentId(resolveParentId(request.getParentWohaChatNo(), request.getParentId()));
+        request.setParentId(resolveParentId(request.getParentWohaChatNo(), request.getParentId(), request.getRegionId()));
         validateParent(request.getRoleCode(), request.getParentId(), request.getRegionId(), accountId);
         validatePermissions(request.getPermissions());
         return user;
@@ -375,13 +371,13 @@ public class ExternalManagerAccountServiceImpl implements IExternalManagerAccoun
     }
 
     /** 根据上级外管的 Woha ChatNo 解析内部账号主键。 */
-    private Long resolveParentId(Long parentWohaChatNo, Long parentId)
+    private Long resolveParentId(Long parentWohaChatNo, Long parentId, Integer regionId)
     {
         if (parentWohaChatNo == null)
         {
             return parentId;
         }
-        ExternalWohaUser parentUser = wohaUserService.selectByChatNo(parentWohaChatNo);
+        ExternalWohaUser parentUser = wohaUserService.selectByChatNo(parentWohaChatNo, regionId);
         if (parentUser == null)
         {
             throw new ServiceException("上级账号关联的 Woha 用户不存在");

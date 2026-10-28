@@ -17,9 +17,9 @@ public interface IExternalWohaUserService
     @DataSource(DataSourceType.SLAVE)
     ExternalWohaUser selectByUid(Long uid);
 
-    /** 根据 ChatNo 查询 Woha 用户 */
+    /** 根据 ChatNo 和大区查询 Woha 用户 */
     @DataSource(DataSourceType.SLAVE)
-    ExternalWohaUser selectByChatNo(Long chatNo);
+    ExternalWohaUser selectByChatNo(Long chatNo, Integer regionId);
 
     /** 批量查询 Woha 用户 */
     @DataSource(DataSourceType.SLAVE)

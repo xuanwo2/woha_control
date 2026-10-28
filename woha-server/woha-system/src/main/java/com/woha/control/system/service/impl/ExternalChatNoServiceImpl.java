@@ -61,13 +61,13 @@ public class ExternalChatNoServiceImpl implements IExternalChatNoService
     }
 
     @Override
-    public void addPool(ExternalChatNoPoolSaveRequest request)
+    public void addPool(ExternalChatNoPoolSaveRequest request, Integer regionId)
     {
         if (request.getChatNo() <= 0)
         {
             throw new ServiceException("靓号不合法");
         }
-        if (wohaUserService.selectByChatNo(request.getChatNo()) != null)
+        if (wohaUserService.selectByChatNo(request.getChatNo(), regionId) != null)
         {
             throw new ServiceException("靓号已被业务用户占用");
         }

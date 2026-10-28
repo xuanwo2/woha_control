@@ -436,7 +436,7 @@ public class ExternalManagerController extends BaseController
         Long wohaUid = null;
         if (wohaChatNo != null)
         {
-            ExternalWohaUser user = wohaUserService.selectByChatNo(wohaChatNo);
+            ExternalWohaUser user = wohaUserService.selectByChatNo(wohaChatNo, regionId);
             wohaUid = user == null ? -1L : user.getUid();
         }
         startPage();
@@ -477,8 +477,8 @@ public class ExternalManagerController extends BaseController
     public AjaxResult addAccountChatNo(@Valid @RequestBody ExternalChatNoPoolSaveRequest request)
     {
         ensureInternalAdmin();
-        accountService.selectAccountById(request.getAccountId());
-        chatNoService.addPool(request);
+        ExternalManagerAccount account = accountService.selectAccountById(request.getAccountId());
+        chatNoService.addPool(request, account.getRegionId());
         return AjaxResult.success();
     }
 

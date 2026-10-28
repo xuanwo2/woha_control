@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.woha.control.system.mapper.ExternalWohaUserMapper">
     <select id="selectByUid" resultType="ExternalWohaUser">select uid, chat_no, region_id from `user` where uid = #{uid} limit 1</select>
-    <select id="selectByChatNo" resultType="ExternalWohaUser">select uid, chat_no, region_id from `user` where chat_no = #{chatNo} limit 1</select>
+    <select id="selectByChatNo" resultType="ExternalWohaUser">select uid, chat_no, region_id from `user` where chat_no = #{chatNo} and region_id = #{regionId} limit 1</select>
     <select id="selectByUids" resultType="ExternalWohaUser">
         select uid, chat_no, region_id from `user` where uid in
         <foreach collection="uids" item="uid" open="(" separator="," close=")">#{uid}</foreach>

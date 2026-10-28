@@ -140,8 +140,8 @@ public class ExternalGiftPackServiceImpl implements IExternalGiftPackService
             throw new ServiceException("不能发放其他大区的礼包");
         }
         giftPack.setItems(giftPackMapper.selectItemsByGiftId(giftPack.getId()));
-        ExternalWohaUser receiver = wohaUserService.selectByChatNo(request.getReceiverChatNo());
-        if (receiver == null || !account.getRegionId().equals(receiver.getRegionId()))
+        ExternalWohaUser receiver = wohaUserService.selectByChatNo(request.getReceiverChatNo(), account.getRegionId());
+        if (receiver == null)
         {
             throw new ServiceException("接收用户不存在或不属于当前大区");
         }

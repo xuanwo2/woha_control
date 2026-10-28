@@ -17,8 +17,8 @@ public interface ExternalWohaUserMapper
     /** 根据 UID 查询 Woha 用户 */
     ExternalWohaUser selectByUid(@Param("uid") Long uid);
 
-    /** 根据 ChatNo 查询 Woha 用户 */
-    ExternalWohaUser selectByChatNo(@Param("chatNo") Long chatNo);
+    /** 根据 ChatNo 和大区查询 Woha 用户 */
+    ExternalWohaUser selectByChatNo(@Param("chatNo") Long chatNo, @Param("regionId") Integer regionId);
 
     /** 批量查询 Woha 用户 */
     List<ExternalWohaUser> selectByUids(@Param("uids") Collection<Long> uids);

@@ -20,7 +20,7 @@ public interface IExternalChatNoService
     /** 统计账号可用靓号数。 */
     int countAvailablePoolByAccountId(Long accountId);
     /** 管理后台向外管账号划拨靓号。 */
-    void addPool(ExternalChatNoPoolSaveRequest request);
+    void addPool(ExternalChatNoPoolSaveRequest request, Integer regionId);
     /** 管理后台回收未分配靓号。 */
     void removeAvailablePool(Long accountId, Long chatNo);
     /** 外管分配靓号。 */

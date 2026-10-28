@@ -42,13 +42,13 @@ public class ExternalWohaUserServiceImpl implements IExternalWohaUserService
         return wohaUserMapper.selectByUid(uid);
     }
 
-    /** 根据 ChatNo 查询原业务库用户 */
+    /** 根据 ChatNo 和大区查询原业务库用户 */
     @Override
     @DataSource(DataSourceType.SLAVE)
-    public ExternalWohaUser selectByChatNo(Long chatNo)
+    public ExternalWohaUser selectByChatNo(Long chatNo, Integer regionId)
     {
         checkSlaveEnabled();
-        return wohaUserMapper.selectByChatNo(chatNo);
+        return wohaUserMapper.selectByChatNo(chatNo, regionId);
     }
 
     /** 批量查询原业务库用户 */
