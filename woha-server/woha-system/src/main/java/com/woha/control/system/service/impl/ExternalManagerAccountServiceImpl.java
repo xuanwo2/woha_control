@@ -14,6 +14,7 @@ import com.woha.control.common.enums.DataSourceType;
 import com.woha.control.common.exception.ServiceException;
 import com.woha.control.common.utils.StringUtils;
 import com.woha.control.system.domain.external.ExternalManagerAccount;
+import com.woha.control.system.domain.external.ExternalManagerOpenMethod;
 import com.woha.control.system.domain.external.ExternalManagerPermission;
 import com.woha.control.system.domain.external.ExternalManagerRole;
 import com.woha.control.system.domain.external.ExternalManagerRolePermission;
@@ -109,7 +110,7 @@ public class ExternalManagerAccountServiceImpl implements IExternalManagerAccoun
         if (ExternalManagerRole.SUPER_ADMIN.name().equals(parent.getRoleCode()) && !ExternalManagerRole.BD.name().equals(request.getRoleCode()) && !ExternalManagerRole.BD_LEADER.name().equals(request.getRoleCode())) throw new ServiceException("Super Admin只能新增BD Leader或BD");
         ExternalManagerSaveRequest save = new ExternalManagerSaveRequest();
         save.setLoginName(request.getLoginName()); save.setRealName(request.getRealName()); save.setWohaChatNo(request.getWohaChatNo()); save.setRoleCode(request.getRoleCode()); save.setParentId(parent.getId()); save.setRegionId(parent.getRegionId()); save.setWhatsapp(request.getWhatsapp()); save.setRemark(request.getRemark());
-        String password = generateInitialPassword(); save.setPassword(password); createAccount(save, parent.getLoginName(), parent.getLoginName() + " 新增");
+        String password = generateInitialPassword(); save.setPassword(password); createAccount(save, parent.getLoginName(), ExternalManagerOpenMethod.SUBORDINATE_OPEN.name());
         return password;
     }
 

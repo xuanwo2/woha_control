@@ -39,6 +39,7 @@ import com.woha.control.framework.security.filter.ExternalAuthenticationTokenFil
 import com.woha.control.framework.web.service.ExternalTokenService;
 import com.woha.control.system.domain.external.ExternalLoginRequest;
 import com.woha.control.system.domain.external.ExternalManagerAccount;
+import com.woha.control.system.domain.external.ExternalManagerOpenMethod;
 import com.woha.control.system.domain.external.ExternalManagerRolePermissionRequest;
 import com.woha.control.system.domain.external.ExternalManagerSaveRequest;
 import com.woha.control.system.domain.external.ExternalPasswordChangeRequest;
@@ -430,7 +431,7 @@ public class ExternalManagerController extends BaseController
     public TableDataInfo list(@RequestParam(required = false) String loginName, @RequestParam(required = false) Long wohaChatNo,
             @RequestParam(required = false) String roleCode, @RequestParam(required = false) Integer regionId,
             @RequestParam(required = false) String status, @RequestParam(required = false) String parentLoginName,
-            @RequestParam(required = false) String openMethod)
+            @RequestParam(required = false) ExternalManagerOpenMethod openMethod)
     {
         Long wohaUid = null;
         if (wohaChatNo != null)
@@ -439,7 +440,8 @@ public class ExternalManagerController extends BaseController
             wohaUid = user == null ? -1L : user.getUid();
         }
         startPage();
-        List<ExternalManagerAccount> list = accountService.selectAccountList(loginName, wohaUid, roleCode, regionId, status, parentLoginName, openMethod);
+        List<ExternalManagerAccount> list = accountService.selectAccountList(loginName, wohaUid, roleCode, regionId, status, parentLoginName,
+                openMethod == null ? null : openMethod.name());
         enrichWohaUsers(list);
         list.forEach(item -> item.setPassword(null));
         return getDataTable(list);
@@ -688,8 +690,8 @@ public class ExternalManagerController extends BaseController
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.getPrincipal() instanceof ExternalLoginUser)
         {
-            return ((ExternalLoginUser) authentication.getPrincipal()).getLoginName() + " 新增";
+            return ExternalManagerOpenMethod.SUBORDINATE_OPEN.name();
         }
-        return "运营开通";
+        return ExternalManagerOpenMethod.OPERATION_OPEN.name();
     }
 }

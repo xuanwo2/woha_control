@@ -34,7 +34,7 @@ public class ExternalManagerAccount
     private Integer regionId;
     /** 功能权限编码，逗号分隔 */
     private String permissions;
-    /** 开通方式 */
+    /** 开通方式枚举编码。 */
     private String openMethod;
     /** WhatsApp账号 */
     private String whatsapp;
