@@ -14,6 +14,9 @@ public class ExternalOperationLog
 {
     /** 操作记录主键 */
     private Long id;
+    /** 所属大区编号 */
+    @Excel(name = "大区编号")
+    private Integer regionId;
     /** 外管账号主键 */
     private Long accountId;
     /** 所属超级管理员账号主键 */

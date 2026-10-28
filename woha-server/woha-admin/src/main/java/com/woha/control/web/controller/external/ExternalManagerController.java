@@ -103,9 +103,14 @@ public class ExternalManagerController extends BaseController
 
     /** 查询外管礼包 */
     @GetMapping("/gift-packs")
-    public AjaxResult giftPackList(@RequestParam(required = false) String status)
+    public AjaxResult giftPackList(@RequestParam(required = false) String status, @RequestParam(required = false) Integer regionId)
     {
-        return AjaxResult.success(giftPackService.selectGiftPackList(status));
+        if (isInternalAdmin())
+        {
+            return AjaxResult.success(giftPackService.selectGiftPackList(status, regionId));
+        }
+        ExternalManagerAccount account = accountService.selectAccountById(currentAccountId());
+        return AjaxResult.success(giftPackService.selectGiftPackList(status, account.getRegionId()));
     }
 
     /** 保存外管礼包 */
@@ -139,7 +144,8 @@ public class ExternalManagerController extends BaseController
     public AjaxResult saveGiftPackQuota(@Valid @RequestBody ExternalGiftPackQuotaSaveRequest request)
     {
         ensureInternalAdmin();
-        giftPackService.saveQuota(request);
+        ExternalManagerAccount account = accountService.selectAccountById(request.getAccountId());
+        giftPackService.saveQuota(request, account.getRegionId());
         return AjaxResult.success();
     }
 
@@ -197,7 +203,7 @@ public class ExternalManagerController extends BaseController
     public AjaxResult accountBanRecords()
     {
         ExternalManagerAccount current = accountService.selectAccountById(currentAccountId());
-        List<ExternalOperationLog> records = operationLogService.selectList(current.getLoginName(), null, null, null, null)
+        List<ExternalOperationLog> records = operationLogService.selectList(current.getLoginName(), null, null, current.getRegionId(), null, null)
                 .stream().filter(item -> "BAN".equals(item.getOperationType()) || "UNBAN".equals(item.getOperationType()))
                 .collect(Collectors.toList());
         return AjaxResult.success(records);
@@ -206,22 +212,24 @@ public class ExternalManagerController extends BaseController
     /** 管理后台查询外管操作记录。 */
     @GetMapping("/operation-logs")
     public TableDataInfo operationLogList(@RequestParam(required = false) String loginName, @RequestParam(required = false) String superAdminName,
-            @RequestParam(required = false) String operationType, @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date beginTime,
+            @RequestParam(required = false) String operationType, @RequestParam(required = false) Integer regionId,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date beginTime,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date endTime)
     {
-        ensureInternalAdmin(); startPage(); return getDataTable(operationLogService.selectList(loginName, superAdminName, operationType, beginTime, endTime));
+        ensureInternalAdmin(); startPage(); return getDataTable(operationLogService.selectList(loginName, superAdminName, operationType, regionId, beginTime, endTime));
     }
 
     /** 管理后台导出外管操作记录。 */
     @PostMapping("/operation-logs/export")
     public void exportOperationLogs(HttpServletResponse response, @RequestParam(required = false) String loginName,
             @RequestParam(required = false) String superAdminName, @RequestParam(required = false) String operationType,
+            @RequestParam(required = false) Integer regionId,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date beginTime,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date endTime)
     {
         ensureInternalAdmin();
         PageHelper.startPage(1, 10000, false);
-        List<ExternalOperationLog> list = operationLogService.selectList(loginName, superAdminName, operationType, beginTime, endTime);
+        List<ExternalOperationLog> list = operationLogService.selectList(loginName, superAdminName, operationType, regionId, beginTime, endTime);
         new ExcelUtil<>(ExternalOperationLog.class).exportExcel(response, list, "外管操作记录");
     }
 
@@ -400,7 +408,7 @@ public class ExternalManagerController extends BaseController
     @PostMapping("/account-assignments/export")
     public void exportAccountAssignments(HttpServletResponse response)
     {
-        ExternalManagerAccount current=accountService.selectAccountById(currentAccountId()); requirePermission(current, ExternalManagerPermission.EXPORT_ACCOUNT_ASSIGNMENT); List<ExternalOperationLog> list=operationLogService.selectList(current.getLoginName(),null,"CREATE_SUBORDINATE",null,null); new ExcelUtil<>(ExternalOperationLog.class).exportExcel(response,list,"账号分配记录"); operationLogService.record(current,"EXPORT_ACCOUNT_ASSIGNMENT","账号分配记录","导出"+list.size()+"条");
+        ExternalManagerAccount current=accountService.selectAccountById(currentAccountId()); requirePermission(current, ExternalManagerPermission.EXPORT_ACCOUNT_ASSIGNMENT); List<ExternalOperationLog> list=operationLogService.selectList(current.getLoginName(),null,"CREATE_SUBORDINATE",current.getRegionId(),null,null); new ExcelUtil<>(ExternalOperationLog.class).exportExcel(response,list,"账号分配记录"); operationLogService.record(current,"EXPORT_ACCOUNT_ASSIGNMENT","账号分配记录","导出"+list.size()+"条");
     }
 
     /** 修改当前外管账号密码 */

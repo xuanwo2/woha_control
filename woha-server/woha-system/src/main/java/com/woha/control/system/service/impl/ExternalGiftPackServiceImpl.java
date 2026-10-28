@@ -46,9 +46,9 @@ public class ExternalGiftPackServiceImpl implements IExternalGiftPackService
     }
 
     @Override
-    public List<ExternalGiftPack> selectGiftPackList(String status)
+    public List<ExternalGiftPack> selectGiftPackList(String status, Integer regionId)
     {
-        List<ExternalGiftPack> list = giftPackMapper.selectGiftPackList(status);
+        List<ExternalGiftPack> list = giftPackMapper.selectGiftPackList(status, regionId);
         if (list.isEmpty())
         {
             return list;
@@ -112,8 +112,9 @@ public class ExternalGiftPackServiceImpl implements IExternalGiftPackService
     }
 
     @Override
-    public void saveQuota(ExternalGiftPackQuotaSaveRequest request)
+    public void saveQuota(ExternalGiftPackQuotaSaveRequest request, Integer regionId)
     {
+        validateGiftPackRegion(request.getGiftId(), regionId);
         ExternalGiftPackQuota quota = new ExternalGiftPackQuota();
         quota.setAccountId(request.getAccountId());
         quota.setGiftId(request.getGiftId());
@@ -133,6 +134,10 @@ public class ExternalGiftPackServiceImpl implements IExternalGiftPackService
         if (giftPack == null || !"0".equals(giftPack.getStatus()))
         {
             throw new ServiceException("礼包不存在或已停用");
+        }
+        if (!account.getRegionId().equals(giftPack.getRegionId()))
+        {
+            throw new ServiceException("不能发放其他大区的礼包");
         }
         giftPack.setItems(giftPackMapper.selectItemsByGiftId(giftPack.getId()));
         ExternalWohaUser receiver = wohaUserService.selectByChatNo(request.getReceiverChatNo());
@@ -164,6 +169,10 @@ public class ExternalGiftPackServiceImpl implements IExternalGiftPackService
     /** 校验礼包配置 */
     private void validateGiftPack(ExternalGiftPack giftPack)
     {
+        if (giftPack.getRegionId() == null || giftPack.getRegionId() < 1 || giftPack.getRegionId() > 7)
+        {
+            throw new ServiceException("所属大区不合法");
+        }
         if (!"0".equals(giftPack.getStatus()) && !"1".equals(giftPack.getStatus()))
         {
             throw new ServiceException("礼包状态不合法");
@@ -187,6 +196,16 @@ public class ExternalGiftPackServiceImpl implements IExternalGiftPackService
             throw new ServiceException("礼包内容类型或内容配置不合法");
         }
         businessService.validateProps(propIds.stream().distinct().collect(java.util.stream.Collectors.toList()));
+    }
+
+    /** 校验礼包归属大区。 */
+    private void validateGiftPackRegion(Long giftId, Integer regionId)
+    {
+        ExternalGiftPack giftPack = giftPackMapper.selectGiftPackById(giftId);
+        if (giftPack == null || !regionId.equals(giftPack.getRegionId()))
+        {
+            throw new ServiceException("礼包与外管账号所属大区不一致");
+        }
     }
 
     /** 判断功能权限 */

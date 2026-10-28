@@ -17,7 +17,7 @@ import com.woha.control.system.domain.external.ExternalGiftPackQuota;
 public interface ExternalGiftPackMapper
 {
     /** 查询礼包列表 */
-    List<ExternalGiftPack> selectGiftPackList(@Param("status") String status);
+    List<ExternalGiftPack> selectGiftPackList(@Param("status") String status, @Param("regionId") Integer regionId);
     /** 查询礼包详情 */
     ExternalGiftPack selectGiftPackById(@Param("id") Long id);
     /** 查询礼包内容 */

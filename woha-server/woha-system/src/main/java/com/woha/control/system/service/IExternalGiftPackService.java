@@ -16,13 +16,13 @@ import com.woha.control.system.domain.external.ExternalManagerAccount;
 public interface IExternalGiftPackService
 {
     /** 查询礼包列表 */
-    List<ExternalGiftPack> selectGiftPackList(String status);
+    List<ExternalGiftPack> selectGiftPackList(String status, Integer regionId);
     /** 保存礼包 */
     void saveGiftPack(ExternalGiftPack giftPack, String operator);
     /** 查询额度列表 */
     List<ExternalGiftPackQuota> selectQuotaList(Long accountId);
     /** 保存额度 */
-    void saveQuota(ExternalGiftPackQuotaSaveRequest request);
+    void saveQuota(ExternalGiftPackQuotaSaveRequest request, Integer regionId);
     /** 发放礼包 */
     void issueGiftPack(ExternalManagerAccount account, ExternalGiftPackIssueRequest request);
     /** 查询发放记录 */

@@ -1,6 +1,7 @@
 -- 外管礼包配置、额度及发放记录
 CREATE TABLE `external_gift_pack` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '礼包主键',
+    `region_id` INT NOT NULL COMMENT '所属大区编号',
     `gift_name` VARCHAR(64) NOT NULL COMMENT '礼包名称',
     `gold_amount` BIGINT NOT NULL DEFAULT 0 COMMENT '赠送金币数量',
     `receive_limit` INT NOT NULL DEFAULT 1 COMMENT '单用户可领取次数',
@@ -10,7 +11,8 @@ CREATE TABLE `external_gift_pack` (
     `update_by` VARCHAR(64) DEFAULT '' COMMENT '更新者',
     `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_external_gift_pack_name` (`gift_name`)
+    UNIQUE KEY `uk_external_gift_pack_region_name` (`region_id`, `gift_name`),
+    KEY `idx_external_gift_pack_region_status` (`region_id`, `status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='外管礼包';
 
 CREATE TABLE `external_gift_pack_item` (
@@ -76,6 +78,7 @@ CREATE TABLE `external_chat_no_pool` (
 CREATE TABLE `external_operation_log` (
     `id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '操作记录主键',
     `account_id` BIGINT NOT NULL COMMENT '外管账号主键',
+    `region_id` INT NOT NULL COMMENT '所属大区编号',
     `super_admin_id` BIGINT DEFAULT NULL COMMENT '所属超级管理员账号主键',
     `role_code` VARCHAR(32) NOT NULL COMMENT '外管角色编码',
     `operation_type` VARCHAR(64) NOT NULL COMMENT '操作类型',
@@ -84,6 +87,7 @@ CREATE TABLE `external_operation_log` (
     `create_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
     PRIMARY KEY (`id`),
     KEY `idx_external_operation_log_account_time` (`account_id`, `create_time`),
+    KEY `idx_external_operation_log_region_time` (`region_id`, `create_time`),
     KEY `idx_external_operation_log_super_time` (`super_admin_id`, `create_time`),
     KEY `idx_external_operation_log_type_time` (`operation_type`, `create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='外管操作记录';

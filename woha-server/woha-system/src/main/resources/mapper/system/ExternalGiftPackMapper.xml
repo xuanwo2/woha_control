@@ -3,6 +3,7 @@
 <mapper namespace="com.woha.control.system.mapper.ExternalGiftPackMapper">
     <resultMap id="giftPackResult" type="ExternalGiftPack">
         <id property="id" column="id"/>
+        <result property="regionId" column="region_id"/>
         <result property="giftName" column="gift_name"/>
         <result property="goldAmount" column="gold_amount"/>
         <result property="receiveLimit" column="receive_limit"/>
@@ -24,14 +25,14 @@
         <result property="usedCount" column="used_count"/>
     </resultMap>
     <select id="selectGiftPackList" resultMap="giftPackResult">
-        select id, gift_name, gold_amount, receive_limit, coalesce(nullif(status, ''), '0') as status, create_time from external_gift_pack
-        <if test="status != null and status != ''">where coalesce(nullif(status, ''), '0') = #{status}</if> order by id desc
+        select id, region_id, gift_name, gold_amount, receive_limit, coalesce(nullif(status, ''), '0') as status, create_time from external_gift_pack
+        <where><if test="status != null and status != ''">and coalesce(nullif(status, ''), '0') = #{status}</if><if test="regionId != null">and region_id = #{regionId}</if></where> order by id desc
     </select>
-    <select id="selectGiftPackById" resultMap="giftPackResult">select id, gift_name, gold_amount, receive_limit, coalesce(nullif(status, ''), '0') as status, create_time from external_gift_pack where id = #{id}</select>
+    <select id="selectGiftPackById" resultMap="giftPackResult">select id, region_id, gift_name, gold_amount, receive_limit, coalesce(nullif(status, ''), '0') as status, create_time from external_gift_pack where id = #{id}</select>
     <select id="selectItemsByGiftId" resultMap="giftItemResult">select id, gift_id, item_type, prop_id, vip_level, day_num, quantity, sort_no from external_gift_pack_item where gift_id = #{giftId} order by sort_no, id</select>
     <select id="selectItemsByGiftIds" resultMap="giftItemResult">select id, gift_id, item_type, prop_id, vip_level, day_num, quantity, sort_no from external_gift_pack_item where gift_id in <foreach collection="giftIds" item="giftId" open="(" separator="," close=")">#{giftId}</foreach> order by gift_id, sort_no, id</select>
-    <insert id="insertGiftPack" useGeneratedKeys="true" keyProperty="id">insert into external_gift_pack(gift_name,gold_amount,receive_limit,status,create_by,update_by) values(#{giftName},#{goldAmount},#{receiveLimit},#{status},#{createBy},#{updateBy})</insert>
-    <update id="updateGiftPack">update external_gift_pack set gift_name=#{giftName},gold_amount=#{goldAmount},receive_limit=#{receiveLimit},status=#{status},update_by=#{updateBy} where id=#{id}</update>
+    <insert id="insertGiftPack" useGeneratedKeys="true" keyProperty="id">insert into external_gift_pack(region_id,gift_name,gold_amount,receive_limit,status,create_by,update_by) values(#{regionId},#{giftName},#{goldAmount},#{receiveLimit},#{status},#{createBy},#{updateBy})</insert>
+    <update id="updateGiftPack">update external_gift_pack set region_id=#{regionId},gift_name=#{giftName},gold_amount=#{goldAmount},receive_limit=#{receiveLimit},status=#{status},update_by=#{updateBy} where id=#{id}</update>
     <delete id="deleteItemsByGiftId">delete from external_gift_pack_item where gift_id = #{giftId}</delete>
     <insert id="insertItems">insert into external_gift_pack_item(gift_id,item_type,prop_id,vip_level,day_num,quantity,sort_no) values <foreach collection="items" item="item" separator=",">(#{item.giftId},#{item.itemType},#{item.propId},#{item.vipLevel},#{item.dayNum},#{item.quantity},#{item.sortNo})</foreach></insert>
     <select id="selectQuotaList" resultMap="giftQuotaResult">select q.account_id, a.login_name, q.gift_id, g.gift_name, q.quota_count, q.used_count from external_gift_pack_quota q join external_manager_account a on a.id=q.account_id join external_gift_pack g on g.id=q.gift_id <if test="accountId != null">where q.account_id=#{accountId}</if> order by q.account_id,g.id</select>

@@ -2,6 +2,7 @@ package com.woha.control.system.domain.external;
 
 import java.util.Date;
 import java.util.List;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
@@ -14,6 +15,9 @@ public class ExternalGiftPack
 {
     /** 礼包主键 */
     private Long id;
+    /** 所属大区编号 */
+    @NotNull(message = "所属大区不能为空")
+    private Integer regionId;
     /** 礼包名称 */
     private String giftName;
     /** 赠送金币数量 */

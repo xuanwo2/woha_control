@@ -15,7 +15,8 @@ public interface ExternalOperationLogService
     /** 记录外管操作。 */
     void record(ExternalManagerAccount account, String operationType, String target, String content);
     /** 查询操作记录。 */
-    List<ExternalOperationLog> selectList(String loginName, String superAdminName, String operationType, Date beginTime, Date endTime);
+    List<ExternalOperationLog> selectList(String loginName, String superAdminName, String operationType, Integer regionId,
+            Date beginTime, Date endTime);
     /** 查询账号最近操作记录。 */
     List<ExternalOperationLog> selectLatestByAccountId(Long accountId, int limit);
     /** 统计账号当天指定类型操作次数。 */

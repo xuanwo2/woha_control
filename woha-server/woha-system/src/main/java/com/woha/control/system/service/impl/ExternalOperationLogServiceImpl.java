@@ -34,6 +34,7 @@ public class ExternalOperationLogServiceImpl implements ExternalOperationLogServ
     {
         ExternalOperationLog log = new ExternalOperationLog();
         log.setAccountId(account.getId());
+        log.setRegionId(account.getRegionId());
         log.setSuperAdminId(findSuperAdminId(account));
         log.setRoleCode(account.getRoleCode());
         log.setOperationType(operationType);
@@ -43,9 +44,10 @@ public class ExternalOperationLogServiceImpl implements ExternalOperationLogServ
     }
 
     @Override
-    public List<ExternalOperationLog> selectList(String loginName, String superAdminName, String operationType, Date beginTime, Date endTime)
+    public List<ExternalOperationLog> selectList(String loginName, String superAdminName, String operationType, Integer regionId,
+            Date beginTime, Date endTime)
     {
-        return logMapper.selectList(loginName, superAdminName, operationType, beginTime, endTime);
+        return logMapper.selectList(loginName, superAdminName, operationType, regionId, beginTime, endTime);
     }
 
     /** 查询账号最近操作记录 */

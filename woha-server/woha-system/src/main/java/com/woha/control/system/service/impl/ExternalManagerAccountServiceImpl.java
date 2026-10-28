@@ -20,6 +20,7 @@ import com.woha.control.system.domain.external.ExternalManagerRolePermission;
 import com.woha.control.system.domain.external.ExternalManagerRolePermissionRequest;
 import com.woha.control.system.domain.external.ExternalManagerSaveRequest;
 import com.woha.control.system.domain.external.ExternalGiftPackQuota;
+import com.woha.control.system.domain.external.ExternalGiftPack;
 import com.woha.control.system.domain.external.ExternalGiftPackQuotaSaveRequest;
 import com.woha.control.system.domain.external.ExternalWohaUser;
 import com.woha.control.system.domain.external.ExternalSubordinateCreateRequest;
@@ -94,7 +95,7 @@ public class ExternalManagerAccountServiceImpl implements IExternalManagerAccoun
         }
         account.setPassword(passwordEncoder.encode(request.getPassword()));
         accountMapper.insertAccount(account);
-        saveGiftQuotas(account.getId(), request.getGiftQuotas());
+        saveGiftQuotas(account.getId(), request.getRegionId(), request.getGiftQuotas());
     }
 
     /** 创建当前外管账号的下级并返回初始密码 */
@@ -141,7 +142,7 @@ public class ExternalManagerAccountServiceImpl implements IExternalManagerAccoun
         }
         account.setLoginName(existing.getLoginName());
         accountMapper.updateAccount(account);
-        saveGiftQuotas(id, request.getGiftQuotas());
+        saveGiftQuotas(id, request.getRegionId(), request.getGiftQuotas());
     }
 
     /** 修改外管账号状态 */
@@ -314,7 +315,7 @@ public class ExternalManagerAccountServiceImpl implements IExternalManagerAccoun
     }
 
     /** 保存外管账号的礼包可赠次数 */
-    private void saveGiftQuotas(Long accountId, List<ExternalGiftPackQuotaSaveRequest> quotas)
+    private void saveGiftQuotas(Long accountId, Integer regionId, List<ExternalGiftPackQuotaSaveRequest> quotas)
     {
         if (quotas == null) return;
         for (ExternalGiftPackQuotaSaveRequest request : quotas)
@@ -322,6 +323,11 @@ public class ExternalManagerAccountServiceImpl implements IExternalManagerAccoun
             if (request.getGiftId() == null || request.getQuotaCount() == null || request.getQuotaCount() < 0)
             {
                 throw new ServiceException("礼包额度配置不合法");
+            }
+            ExternalGiftPack giftPack = giftPackMapper.selectGiftPackById(request.getGiftId());
+            if (giftPack == null || !regionId.equals(giftPack.getRegionId()))
+            {
+                throw new ServiceException("礼包与外管账号所属大区不一致");
             }
             ExternalGiftPackQuota quota = new ExternalGiftPackQuota();
             quota.setAccountId(accountId);
