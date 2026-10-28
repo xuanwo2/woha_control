@@ -14,7 +14,7 @@
       <el-table-column prop="responsibleName" label="负责人" min-width="110" />
       <el-table-column prop="bdLeaderName" label="所属BD Leader" min-width="130" />
       <el-table-column prop="anchorCount" label="主播数" width="90" />
-      <el-table-column prop="monthFlow" label="本月流水（金幣）" min-width="150"><template #default="{ row }">{{ number(row.monthFlow) }}</template></el-table-column>
+      <el-table-column prop="monthFlow" label="本月流水（金币）" min-width="150"><template #default="{ row }">{{ number(row.monthFlow) }}</template></el-table-column>
       <el-table-column prop="createMethod" label="创建方式" width="110" />
       <el-table-column prop="statusName" label="状态" width="100" />
     </el-table>

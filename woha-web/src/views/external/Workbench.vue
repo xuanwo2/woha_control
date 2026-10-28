@@ -1,56 +1,58 @@
 <template>
   <div class="page">
-    <h2>工作台</h2>
+    <h2>{{ t('dashboard') }}</h2>
     <section class="cards">
       <div v-for="item in cards" :key="item.label" class="card"><span>{{ item.label }}</span><strong>{{ number(item.value) }}</strong></div>
     </section>
     <el-card>
-      <template #header>公会流水（金币）</template>
+      <template #header>{{ t('agencyRevenueGold') }}</template>
       <el-descriptions :column="4">
-        <el-descriptions-item label="日流水">{{ number(data.dayFlow) }}</el-descriptions-item>
-        <el-descriptions-item label="周流水">{{ number(data.weekFlow) }}</el-descriptions-item>
-        <el-descriptions-item label="月流水">{{ number(data.monthFlow) }}</el-descriptions-item>
-        <el-descriptions-item label="总流水">{{ number(data.totalFlow) }}</el-descriptions-item>
+        <el-descriptions-item :label="t('daily')">{{ number(data.dayFlow) }}</el-descriptions-item>
+        <el-descriptions-item :label="t('weekly')">{{ number(data.weekFlow) }}</el-descriptions-item>
+        <el-descriptions-item :label="t('monthly')">{{ number(data.monthFlow) }}</el-descriptions-item>
+        <el-descriptions-item :label="t('total')">{{ number(data.totalFlow) }}</el-descriptions-item>
       </el-descriptions>
     </el-card>
     <el-card class="space">
-      <template #header>额度与授权余量</template>
+      <template #header>{{ t('quotaAndAuthorization') }}</template>
       <div v-if="quotaItems.length" class="quota-list">
         <div v-for="item in quotaItems" :key="item.label" class="quota-item"><span>{{ item.label }}</span><strong>{{ item.value }}</strong></div>
       </div>
-      <span v-else class="muted">当前账号暂无可展示的额度或授权。</span>
+      <span v-else class="muted">{{ t('noQuota') }}</span>
     </el-card>
     <el-card class="space">
-      <template #header>最近操作（本人）</template>
+      <template #header>{{ t('recentOperations') }}</template>
       <el-table v-if="data.recentOperations?.length" :data="data.recentOperations" size="small">
-        <el-table-column label="时间" width="170"><template #default="{ row }">{{ parseTime(row.createTime) }}</template></el-table-column>
-        <el-table-column label="操作" width="140"><template #default="{ row }">{{ operationName(row.operationType) }}</template></el-table-column>
-        <el-table-column prop="target" label="对象" width="150" />
-        <el-table-column prop="content" label="内容" min-width="220" />
+        <el-table-column :label="t('time')" width="170"><template #default="{ row }">{{ parseTime(row.createTime) }}</template></el-table-column>
+        <el-table-column :label="t('operation')" width="140"><template #default="{ row }">{{ operationName(row.operationType) }}</template></el-table-column>
+        <el-table-column prop="target" :label="t('target')" width="150" />
+        <el-table-column prop="content" :label="t('content')" min-width="220" />
       </el-table>
-      <span v-else class="muted">暂无操作记录。</span>
+      <span v-else class="muted">{{ t('noOperations') }}</span>
     </el-card>
   </div>
 </template>
 
 <script setup>
 import { getExternalWorkbench } from '@/api/external/manager'
+import { useExternalI18n } from '@/i18n/external'
 
 const { proxy } = getCurrentInstance()
+const { locale, t } = useExternalI18n()
 const data = reactive({ giftPackQuotas: [], recentOperations: [] })
-const number = value => Number(value || 0).toLocaleString()
+const number = value => Number(value || 0).toLocaleString(locale.value === 'zh-CN' ? 'zh-CN' : locale.value)
 const cards = computed(() => [
   { label: 'BD Leader', value: data.bdLeaderCount }, { label: 'BD', value: data.bdCount },
-  { label: '公会', value: data.guildCount }, { label: '主播', value: data.anchorCount },
-  { label: '今日团队流水（金币）', value: data.dayFlow }
+  { label: t('agenciesCount'), value: data.guildCount }, { label: t('anchors'), value: data.anchorCount },
+  { label: t('todayTeamRevenue'), value: data.dayFlow }
 ])
 const quotaItems = computed(() => {
   const items = (data.giftPackQuotas || []).map(item => ({
     label: item.giftName,
-    value: `剩余 ${Math.max(0, Number(item.quotaCount || 0) - Number(item.usedCount || 0))} / ${item.quotaCount || 0} 份`
+    value: `${t('remaining')} ${Math.max(0, Number(item.quotaCount || 0) - Number(item.usedCount || 0))} / ${item.quotaCount || 0}`
   }))
-  if (data.chatNoTotal !== undefined) items.push({ label: '靓号', value: `可用 ${data.chatNoAvailable || 0} / ${data.chatNoTotal || 0}` })
-  if (data.todayBanCount !== undefined) items.push({ label: '账号封禁', value: `今日已用 ${data.todayBanCount} / 10` })
+  if (data.chatNoTotal !== undefined) items.push({ label: t('specialIds'), value: `${t('available')} ${data.chatNoAvailable || 0} / ${data.chatNoTotal || 0}` })
+  if (data.todayBanCount !== undefined) items.push({ label: t('bans'), value: `${t('usedToday')} ${data.todayBanCount} / 10` })
   return items
 })
 const operationNames = {

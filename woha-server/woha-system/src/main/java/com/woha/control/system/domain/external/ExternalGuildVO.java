@@ -34,16 +34,16 @@ public class ExternalGuildVO
     @Excel(name = "主播数")
     private Integer anchorCount;
     /** 范围内流水 */
-    @Excel(name = "范围流水（金幣）")
+    @Excel(name = "范围流水（金币）")
     private Long rangeFlow;
     /** 周流水 */
-    @Excel(name = "周流水（金幣）")
+    @Excel(name = "周流水（金币）")
     private Long weekFlow;
     /** 月流水 */
-    @Excel(name = "月流水（金幣）")
+    @Excel(name = "月流水（金币）")
     private Long monthFlow;
     /** 历史总流水 */
-    @Excel(name = "总流水（金幣）")
+    @Excel(name = "总流水（金币）")
     private Long totalFlow;
     /** 创建来源 */
     @Excel(name = "创建方式")
