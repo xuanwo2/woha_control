@@ -30,8 +30,8 @@
 
     <insert id="insertCaptainMember">
         insert into fm_family_user
-        (uid, family_id, type, anchor_status, create_time, first_join, region_id)
-        values (#{captainUid}, #{familyId}, 0, 0, now(), 1, #{regionId})
+        (uid, family_id, type, anchor_status, role_id, create_time, first_join, region_id)
+        values (#{captainUid}, #{familyId}, 0, 0, 0, now(), 1, #{regionId})
     </insert>
 
     <sql id="guildFilters">
