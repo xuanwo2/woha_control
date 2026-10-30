@@ -3,7 +3,7 @@
     <section class="quota-grid">
       <div v-for="item in configuredPacks" :key="item.id" class="quota-card"><span>{{ item.giftName }} · 剩余 / 额度</span><strong>{{ quotaText(item.id) }}</strong><small>每人限领 {{ item.receiveLimit || 0 }} 次</small></div>
     </section>
-    <section class="issue-panel">
+    <section v-if="canIssue" class="issue-panel">
       <h2>赠送礼包</h2>
       <el-form label-width="86px" class="issue-form">
         <el-form-item label="用户 Woha ID"><el-input v-model.number="form.receiverChatNo" placeholder="请输入用户 Woha ID" /></el-form-item>
@@ -27,12 +27,13 @@
 
 <script setup>
 import { ElMessage } from 'element-plus'
-import { issueExternalGiftPack, listExternalGiftPackIssues, listExternalGiftPackQuotas, listExternalGiftPacks } from '@/api/external/manager'
+import { getExternalProfile, issueExternalGiftPack, listExternalGiftPackIssues, listExternalGiftPackQuotas, listExternalGiftPacks } from '@/api/external/manager'
 
 const packs = ref([])
 const quotas = ref([])
 const issues = ref([])
 const issuing = ref(false)
+const profile = ref({})
 const form = reactive({ receiverChatNo: undefined, giftId: undefined })
 const configuredPacks = computed(() => packs.value.map(pack => {
   const quota = quotas.value.find(item => item.giftId === pack.id)
@@ -43,6 +44,7 @@ const configuredPacks = computed(() => packs.value.map(pack => {
   }
 }))
 const selectedPack = computed(() => configuredPacks.value.find(item => item.id === form.giftId))
+const canIssue = computed(() => String(profile.value.permissions || '').split(',').includes('SEND_GIFT_PACK'))
 const quotaText = giftId => { const item = configuredPacks.value.find(value => value.id === giftId); return item ? `${Math.max(0, item.quotaCount - item.usedCount)} / ${item.quotaCount}` : '0 / 0' }
 const packOptionLabel = item => item.quotaCount <= item.usedCount ? `${item.giftName}（额度不足）` : item.giftName
 
@@ -67,6 +69,7 @@ async function issue() {
   }
 }
 
+getExternalProfile().then(res => profile.value = res.data || {})
 load()
 </script>
 

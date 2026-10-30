@@ -28,7 +28,7 @@
         <el-table-column label="类型" width="100"><template #default="{ row }">{{ row.operationType === 'BAN' ? '执行封禁' : '解除封禁' }}</template></el-table-column>
         <el-table-column prop="target" label="对象" width="120" />
         <el-table-column prop="content" label="说明" min-width="180" />
-        <el-table-column label="操作" width="100" align="center"><template #default="{ row }"><el-button v-if="row.operationType === 'BAN'" link type="danger" @click="release(row)">解除</el-button></template></el-table-column>
+        <el-table-column label="操作" width="100" align="center"><template #default="{ row }"><el-button v-if="canBan && row.operationType === 'BAN'" link type="danger" @click="release(row)">解除</el-button></template></el-table-column>
       </el-table>
     </section>
   </div>

@@ -13,7 +13,7 @@
         <el-table-column prop="expireTime" label="到期" min-width="160"><template #default="{ row }">{{ row.expireTime || '--' }}</template></el-table-column>
       </el-table>
     </section>
-    <section class="assign-panel">
+    <section v-if="canAssign" class="assign-panel">
       <h2>分配靓号</h2>
       <el-form :model="assignForm" label-width="86px">
         <el-form-item label="靓号"><el-select v-model="assignForm.chatNo" filterable placeholder="选择可用靓号"><el-option v-for="item in availableItems" :key="item.chatNo" :label="item.chatNo" :value="item.chatNo" /></el-select></el-form-item>
@@ -27,14 +27,16 @@
 
 <script setup>
 import { ElMessage } from 'element-plus'
-import { assignExternalChatNo, listExternalChatNos } from '@/api/external/manager'
+import { assignExternalChatNo, getExternalProfile, listExternalChatNos } from '@/api/external/manager'
 
 const loading = ref(false)
 const items = ref([])
+const profile = ref({})
 const assignForm = reactive({ chatNo: undefined, receiverChatNo: undefined, dayNum: 30 })
 const availableItems = computed(() => items.value.filter(item => item.status === '0'))
 const availableCount = computed(() => availableItems.value.length)
 const assignedCount = computed(() => items.value.filter(item => item.status === '1').length)
+const canAssign = computed(() => String(profile.value.permissions || '').split(',').includes('ASSIGN_CHAT_NO'))
 
 async function load() {
   loading.value = true
@@ -54,6 +56,7 @@ async function assign() {
   load()
 }
 
+getExternalProfile().then(res => profile.value = res.data || {})
 load()
 </script>
 

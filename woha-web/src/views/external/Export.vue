@@ -53,7 +53,10 @@ const datasetDefinitions = [
   { code: 'TEAM_MEMBER', permission: 'EXPORT_TEAM_MEMBER', name: '团队成员', path: 'external/team/members/export', fields: [{ code: 'loginName', name: '外管账号' }, { code: 'realName', name: '姓名' }, { code: 'wohaUid', name: '关联Woha UID' }, { code: 'roleCode', name: '角色' }, { code: 'parentLoginName', name: '上级账号' }] },
   { code: 'GIFT_ISSUE', permission: 'EXPORT_GIFT_ISSUE', name: '礼包赠送记录', path: 'external/gift-packs/issues/export', fields: [{ code: 'giftName', name: '礼包名称' }, { code: 'receiverUid', name: '接收用户UID' }, { code: 'loginName', name: '操作账号' }, { code: 'contentSnapshot', name: '发放内容' }, { code: 'status', name: '状态' }, { code: 'createTime', name: '发放时间' }] }
 ]
-const datasets = computed(() => datasetDefinitions)
+const datasets = computed(() => {
+  const permissions = String(profile.value.permissions || '').split(',')
+  return datasetDefinitions.filter(item => permissions.includes(item.permission))
+})
 const currentDataset = computed(() => datasets.value.find(item => item.code === selectedCode.value) || { fields: [] })
 
 function changeDataset() {

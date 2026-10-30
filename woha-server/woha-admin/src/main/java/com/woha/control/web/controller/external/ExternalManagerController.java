@@ -155,6 +155,7 @@ public class ExternalManagerController extends BaseController
     public AjaxResult issueGiftPack(@Valid @RequestBody ExternalGiftPackIssueRequest request)
     {
         ExternalManagerAccount account = accountService.selectAccountById(currentAccountId());
+        requirePermission(account, ExternalManagerPermission.SEND_GIFT_PACK);
         giftPackService.issueGiftPack(account, request);
         operationLogService.record(account, "ISSUE_GIFT", String.valueOf(request.getReceiverChatNo()), "赠送礼包");
         return AjaxResult.success();
@@ -178,7 +179,9 @@ public class ExternalManagerController extends BaseController
     @PostMapping("/chat-nos/assign")
     public AjaxResult assignChatNo(@Valid @RequestBody ExternalChatNoAssignRequest request)
     {
-        ExternalManagerAccount account = accountService.selectAccountById(currentAccountId()); chatNoService.assign(account, request);
+        ExternalManagerAccount account = accountService.selectAccountById(currentAccountId());
+        requirePermission(account, ExternalManagerPermission.ASSIGN_CHAT_NO);
+        chatNoService.assign(account, request);
         operationLogService.record(account, "ASSIGN_CHAT_NO", String.valueOf(request.getReceiverChatNo()), request.getChatNo() + "，" + request.getDayNum() + "天");
         return AjaxResult.success();
     }
@@ -187,7 +190,9 @@ public class ExternalManagerController extends BaseController
     @PostMapping("/account-bans")
     public AjaxResult banAccount(@Valid @RequestBody ExternalAccountBanRequest request)
     {
-        accountBanService.ban(accountService.selectAccountById(currentAccountId()), request);
+        ExternalManagerAccount account = accountService.selectAccountById(currentAccountId());
+        requirePermission(account, ExternalManagerPermission.EXECUTE_BAN);
+        accountBanService.ban(account, request);
         return AjaxResult.success();
     }
 
@@ -195,7 +200,9 @@ public class ExternalManagerController extends BaseController
     @PostMapping("/account-bans/{chatNo}/release")
     public AjaxResult releaseAccountBan(@PathVariable Long chatNo)
     {
-        accountBanService.release(accountService.selectAccountById(currentAccountId()), chatNo);
+        ExternalManagerAccount account = accountService.selectAccountById(currentAccountId());
+        requirePermission(account, ExternalManagerPermission.EXECUTE_BAN);
+        accountBanService.release(account, chatNo);
         return AjaxResult.success();
     }
 
@@ -204,6 +211,7 @@ public class ExternalManagerController extends BaseController
     public AjaxResult accountBanRecords()
     {
         ExternalManagerAccount current = accountService.selectAccountById(currentAccountId());
+        requirePermission(current, ExternalManagerPermission.EXECUTE_BAN);
         List<ExternalOperationLog> records = operationLogService.selectList(current.getLoginName(), null, null, current.getRegionId(), null, null)
                 .stream().filter(item -> "BAN".equals(item.getOperationType()) || "UNBAN".equals(item.getOperationType()))
                 .collect(Collectors.toList());
@@ -297,7 +305,9 @@ public class ExternalManagerController extends BaseController
     @GetMapping("/team/members")
     public TableDataInfo teamMembers(@RequestParam(required = false) String loginName, @RequestParam(required = false) String roleCode, @RequestParam(required = false) String status)
     {
-        ExternalManagerAccount current = accountService.selectAccountById(currentAccountId()); List<Long> ids = teamService.resolveVisibleAccountIds(current);
+        ExternalManagerAccount current = accountService.selectAccountById(currentAccountId());
+        requirePermission(current, ExternalManagerPermission.VIEW_TEAM_GUILD);
+        List<Long> ids = teamService.resolveVisibleAccountIds(current);
         startPage(); List<ExternalManagerAccount> list = teamService.selectTeamMembers(ids, loginName, roleCode, status); enrichWohaUsers(list);
         Map<Long, ExternalTeamMetric> metrics = teamService.selectMetrics(list).stream().collect(Collectors.toMap(ExternalTeamMetric::getWohaUid, Function.identity()));
         list.forEach(item -> { ExternalTeamMetric metric = metrics.get(item.getWohaUid()); if (metric != null) { item.setGuildCount(metric.getGuildCount()); item.setMonthFlow(metric.getMonthFlow()); } item.setPassword(null); });
@@ -308,7 +318,13 @@ public class ExternalManagerController extends BaseController
     @PostMapping("/team/subordinates")
     public AjaxResult addSubordinate(@Valid @RequestBody ExternalSubordinateCreateRequest request)
     {
-        ExternalManagerAccount account = accountService.selectAccountById(currentAccountId()); String password = accountService.createSubordinate(account, request); operationLogService.record(account, "CREATE_SUBORDINATE", request.getLoginName(), request.getRoleCode()); AjaxResult result = AjaxResult.success(); result.put("initialPassword", password); return result;
+        ExternalManagerAccount account = accountService.selectAccountById(currentAccountId());
+        requirePermission(account, ExternalManagerPermission.CREATE_SUBORDINATE);
+        String password = accountService.createSubordinate(account, request);
+        operationLogService.record(account, "CREATE_SUBORDINATE", request.getLoginName(), request.getRoleCode());
+        AjaxResult result = AjaxResult.success();
+        result.put("initialPassword", password);
+        return result;
     }
 
     /** 查询当前账号可选择的公会负责人 */
@@ -327,6 +343,7 @@ public class ExternalManagerController extends BaseController
     public AjaxResult guildCaptainPreview(@RequestParam Long chatNo)
     {
         ExternalManagerAccount current = accountService.selectAccountById(currentAccountId());
+        requirePermission(current, ExternalManagerPermission.CREATE_GUILD);
         return AjaxResult.success(guildService.selectCaptainPreview(chatNo, current.getRegionId()));
     }
 
@@ -335,6 +352,7 @@ public class ExternalManagerController extends BaseController
     public AjaxResult createGuild(@Valid @RequestBody ExternalGuildCreateRequest request)
     {
         ExternalManagerAccount current = accountService.selectAccountById(currentAccountId());
+        requirePermission(current, ExternalManagerPermission.CREATE_GUILD);
         ExternalManagerAccount responsible = selectGuildResponsibleAccounts(current).stream()
                 .filter(item -> item.getId().equals(request.getResponsibleAccountId())).findFirst()
                 .orElseThrow(() -> new ServiceException("负责人不在当前账号可选范围内"));
@@ -348,6 +366,7 @@ public class ExternalManagerController extends BaseController
     public TableDataInfo guildList(ExternalGuildQuery query)
     {
         ExternalManagerAccount current = accountService.selectAccountById(currentAccountId());
+        requirePermission(current, ExternalManagerPermission.VIEW_TEAM_GUILD);
         List<ExternalManagerAccount> accounts = selectVisibleGuildAccounts(current);
         query.setVisibleWohaUids(accounts.stream().map(ExternalManagerAccount::getWohaUid).collect(Collectors.toList()));
         startPage();
@@ -361,6 +380,7 @@ public class ExternalManagerController extends BaseController
     public AjaxResult guildFlowSummary(ExternalGuildQuery query)
     {
         ExternalManagerAccount current = accountService.selectAccountById(currentAccountId());
+        requirePermission(current, ExternalManagerPermission.VIEW_GUILD_FLOW);
         List<ExternalManagerAccount> accounts = selectVisibleGuildAccounts(current);
         query.setVisibleWohaUids(accounts.stream().map(ExternalManagerAccount::getWohaUid).collect(Collectors.toList()));
         ExternalGuildFlowSummary summary = guildService.selectGuildFlowSummary(query);
@@ -661,7 +681,7 @@ public class ExternalManagerController extends BaseController
     /** 校验外管功能权限。 */
     private void requirePermission(ExternalManagerAccount account, ExternalManagerPermission permission)
     {
-        if (account.getPermissions() == null || !List.of(account.getPermissions().split(",")).contains(permission.name())) throw new ServiceException("当前账号没有导出权限");
+        if (account.getPermissions() == null || !List.of(account.getPermissions().split(",")).contains(permission.name())) throw new ServiceException("当前账号没有该操作权限");
     }
 
     /** 判断外管账号是否拥有指定功能权限。 */

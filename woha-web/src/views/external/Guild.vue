@@ -6,7 +6,7 @@
       <el-form-item label="创建方式"><el-select v-model="query.createSource" clearable placeholder="请选择"><el-option label="外管创建" :value="0" /><el-option label="入驻申请" :value="1" /></el-select></el-form-item>
       <el-button type="primary" @click="load">查询</el-button><el-button @click="reset">重置</el-button>
     </el-form>
-    <div class="toolbar"><h2>公会管理</h2><div><el-button @click="exportData">导出</el-button><el-button type="primary" @click="openCreate">新建公会</el-button></div></div>
+    <div class="toolbar"><h2>公会管理</h2><div><el-button v-if="canExport" @click="exportData">导出</el-button><el-button v-if="canCreate" type="primary" @click="openCreate">新建公会</el-button></div></div>
     <el-table :data="rows" v-loading="loading" border>
       <el-table-column prop="familyName" label="公会" min-width="180"><template #default="{ row }">{{ row.familyName }}（{{ row.familyNo }}）</template></el-table-column>
       <el-table-column prop="captainChatNo" label="会长ID" min-width="110" />
@@ -37,17 +37,20 @@
 <script setup>
 import { ElMessage } from 'element-plus'
 import { getExternalToken } from '@/utils/externalAuth'
-import { createExternalGuild, getExternalGuildCaptainPreview, listExternalGuild, listExternalGuildResponsibles } from '@/api/external/manager'
+import { createExternalGuild, getExternalGuildCaptainPreview, getExternalProfile, listExternalGuild, listExternalGuildResponsibles } from '@/api/external/manager'
 
 const { proxy } = getCurrentInstance()
 const rows = ref([]), total = ref(0), loading = ref(false), visible = ref(false), submitting = ref(false), formRef = ref()
 const responsibles = ref([])
 const captainPreview = ref(null)
+const profile = ref({})
 const query = reactive({ pageNum: 1, pageSize: 10, keyword: '', responsibleWohaUid: undefined, createSource: undefined })
 const form = reactive({ captainChatNo: undefined, familyName: '', familyLogo: '', whatsapp: '', responsibleAccountId: undefined })
 const rules = { captainChatNo: [{ required: true, message: '请输入会长 Woha ID', trigger: 'blur' }], familyName: [{ required: true, message: '请输入公会名称', trigger: 'blur' }], responsibleAccountId: [{ required: true, message: '请选择负责人', trigger: 'change' }] }
 const uploadUrl = `${import.meta.env.VITE_APP_BASE_API}/upload/img.action`
 const uploadHeaders = computed(() => ({ 'X-External-Token': getExternalToken() }))
+const canCreate = computed(() => String(profile.value.permissions || '').split(',').includes('CREATE_GUILD'))
+const canExport = computed(() => String(profile.value.permissions || '').split(',').includes('EXPORT_GUILD_FLOW'))
 const number = value => Number(value || 0).toLocaleString()
 const responsibleLabel = item => `${item.realName || item.loginName}（${item.wohaChatNo || item.wohaUid}）`
 const captainPreviewText = computed(() => {
@@ -65,6 +68,7 @@ function beforeUpload(file) { if (file.size / 1024 / 1024 > 5) { ElMessage.error
 function uploadSuccess(res) { if (res.code !== 200 || !res.path) { ElMessage.error(res.msg || '图片上传失败'); return } form.familyLogo = res.path }
 function submit() { formRef.value.validate(async valid => { if (!valid) return; submitting.value = true; try { await createExternalGuild(form); ElMessage.success('公会创建成功'); visible.value = false; load() } finally { submitting.value = false } }) }
 function exportData() { proxy.download('external/guild/export', { keyword: query.keyword, responsibleWohaUid: query.responsibleWohaUid, createSource: query.createSource }, `公会数据_${Date.now()}.xlsx`) }
+getExternalProfile().then(res => profile.value = res.data || {})
 loadResponsibles(); load()
 </script>
 
