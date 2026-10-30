@@ -75,22 +75,22 @@ function saveRecord(dataset, params) {
   localStorage.setItem(storageKey, JSON.stringify(records.value))
 }
 
-function download(dataset, params) {
-  proxy.download(dataset.path, params, `${dataset.name}_${Date.now()}.xlsx`)
+async function download(dataset, params) {
+  return await proxy.download(dataset.path, params, `${dataset.name}_${Date.now()}.xlsx`)
 }
 
-function exportData() {
+async function exportData() {
   const dataset = currentDataset.value
   const params = { fieldCodes: selectedFields.value.join(','), startDate: dateRange.value?.[0], endDate: dateRange.value?.[1] }
-  download(dataset, params)
+  if (!await download(dataset, params)) return
   saveRecord(dataset, params)
   ElMessage.success('已开始导出')
 }
 
-function downloadRecord(record) {
+async function downloadRecord(record) {
   const dataset = datasetDefinitions.find(item => item.code === record.code)
   if (!dataset) return
-  download(dataset, record.params)
+  await download(dataset, record.params)
 }
 
 async function init() {
