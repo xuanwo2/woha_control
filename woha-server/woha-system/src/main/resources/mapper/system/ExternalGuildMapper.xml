@@ -55,6 +55,7 @@
         left join `user` captain on captain.uid = f.uid
         left join bd_user_family responsible_relation on responsible_relation.family_id = f.family_id
         left join bd_user responsible_bd on responsible_bd.bd_user_id = responsible_relation.bd_user_id
+        left join bd_leader responsible_leader on responsible_leader.bd_leader_id = responsible_bd.bd_leader_id
         left join (
             select family_id, count(1) as anchor_count
             from fm_family_user where anchor_status = 1 group by family_id
@@ -75,6 +76,7 @@
     <select id="selectGuildList" resultType="ExternalGuildVO">
         select f.family_id, f.family_no, f.family_name, captain.chat_no as captain_chat_no,
                captain.nickname as captain_nickname, responsible_bd.uid as responsible_woha_uid,
+               responsible_leader.uid as bd_leader_woha_uid,
                ifnull(anchor_stat.anchor_count, 0) as anchor_count,
                ifnull(flow.range_flow, 0) as range_flow, ifnull(flow.week_flow, 0) as week_flow,
                ifnull(flow.month_flow, 0) as month_flow, ifnull(flow.total_flow, 0) as total_flow,

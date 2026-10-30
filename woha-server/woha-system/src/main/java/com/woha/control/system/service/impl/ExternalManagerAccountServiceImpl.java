@@ -91,6 +91,7 @@ public class ExternalManagerAccountServiceImpl implements IExternalManagerAccoun
     {
         ExternalWohaUser user = validateRequest(request, null, true);
         ExternalManagerAccount account = buildAccount(request, operator, user);
+        validateExistingBdHierarchy(account);
         account.setOpenMethod(openMethod);
         if (request.getPermissions() == null || request.getPermissions().isEmpty())
         {
@@ -124,6 +125,30 @@ public class ExternalManagerAccountServiceImpl implements IExternalManagerAccoun
         SecureRandom random = new SecureRandom(); StringBuilder value = new StringBuilder("Aa1");
         for (int i = 0; i < 9; i++) value.append(PASSWORD_CHARACTERS.charAt(random.nextInt(PASSWORD_CHARACTERS.length())));
         return value.toString();
+    }
+
+    /** 校验既有 BD 上级与指定外管上级一致。 */
+    private void validateExistingBdHierarchy(ExternalManagerAccount account)
+    {
+        if (!ExternalManagerRole.BD.name().equals(account.getRoleCode()))
+        {
+            return;
+        }
+        Integer existingBdLeaderId = bdRelationMapper.selectBdUserLeaderIdByUid(account.getWohaUid());
+        if (existingBdLeaderId == null)
+        {
+            return;
+        }
+        ExternalManagerAccount parent = account.getParentId() == null ? null : selectAccountById(account.getParentId());
+        if (parent == null || !ExternalManagerRole.BD_LEADER.name().equals(parent.getRoleCode()))
+        {
+            throw new ServiceException("关联 Woha 用户已有 BD 上级，与指定外管上级不一致，不能创建");
+        }
+        Integer selectedBdLeaderId = bdRelationMapper.selectBdLeaderIdByUid(parent.getWohaUid());
+        if (!existingBdLeaderId.equals(selectedBdLeaderId))
+        {
+            throw new ServiceException("关联 Woha 用户已有 BD 上级，与指定外管上级不一致，不能创建");
+        }
     }
 
     /** 为 BD Leader、BD 外管账号补齐旧 BD 体系关系。 */

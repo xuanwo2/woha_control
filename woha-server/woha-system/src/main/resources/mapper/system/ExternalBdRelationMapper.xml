@@ -14,6 +14,10 @@
         select bd_user_id from bd_user where uid = #{uid} limit 1
     </select>
 
+    <select id="selectBdUserLeaderIdByUid" resultType="java.lang.Integer">
+        select bd_leader_id from bd_user where uid = #{uid} limit 1
+    </select>
+
     <insert id="insertBdUser">
         insert into bd_user (uid, bd_leader_id, type, user_manage, invite_approve, family_num,
                              invite_code, status, enable, remark, join_time, region_id)

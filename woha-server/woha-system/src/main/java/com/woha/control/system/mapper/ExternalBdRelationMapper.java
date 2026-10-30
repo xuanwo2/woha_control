@@ -20,6 +20,9 @@ public interface ExternalBdRelationMapper
     /** 根据 Woha 用户 UID 查询 BD 用户主键 */
     Long selectBdUserIdByUid(@Param("uid") Long uid);
 
+    /** 根据 Woha 用户 UID 查询归属 BDLeader 主键 */
+    Integer selectBdUserLeaderIdByUid(@Param("uid") Long uid);
+
     /** 创建 BD 用户 */
     int insertBdUser(@Param("uid") Long uid, @Param("bdLeaderId") Integer bdLeaderId,
             @Param("type") Integer type, @Param("regionId") Integer regionId, @Param("remark") String remark);
