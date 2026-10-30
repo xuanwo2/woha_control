@@ -646,7 +646,8 @@ public class ExternalManagerController extends BaseController
                 ExternalManagerAccount::getId, Function.identity(), (first, ignored) -> first));
         guilds.forEach(item -> {
             ExternalManagerAccount responsible = accountByUid.get(item.getResponsibleWohaUid());
-            ExternalManagerAccount leader = responsible == null ? null : accountById.get(responsible.getParentId());
+            ExternalManagerAccount leader = responsible == null ? null
+                    : "BD_LEADER".equals(responsible.getRoleCode()) ? responsible : accountById.get(responsible.getParentId());
             item.setResponsibleName(responsible == null ? "--" : responsible.getRealName());
             item.setBdLeaderName(leader == null ? "--" : leader.getRealName());
         });
