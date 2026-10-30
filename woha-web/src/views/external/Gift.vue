@@ -16,7 +16,7 @@
       <h2>赠送记录</h2>
       <el-table :data="issues" border size="small" empty-text="暂无赠送记录">
         <el-table-column prop="createTime" label="时间" min-width="155" />
-        <el-table-column prop="receiverUid" label="对象" min-width="105" />
+        <el-table-column prop="receiverChatNo" label="对象" min-width="105" />
         <el-table-column prop="giftName" label="礼包" min-width="120" />
         <el-table-column prop="loginName" label="操作人" min-width="110" />
         <el-table-column label="状态" width="100"><template #default="{ row }"><el-tag :type="row.status === '0' ? 'success' : 'danger'">{{ row.status === '0' ? '已发放' : '失败' }}</el-tag></template></el-table-column>

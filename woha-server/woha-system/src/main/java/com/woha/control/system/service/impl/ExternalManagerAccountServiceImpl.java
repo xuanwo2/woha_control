@@ -187,12 +187,13 @@ public class ExternalManagerAccountServiceImpl implements IExternalManagerAccoun
     public ExternalManagerAccount login(String loginName, String password, String loginIp)
     {
         ExternalManagerAccount account = accountMapper.selectAccountByLoginNameForUpdate(loginName);
-        if (account == null || !passwordEncoder.matches(password, account.getPassword()))
+        if (account == null)
         {
-            if (account != null)
-            {
-                recordLoginFailure(account);
-            }
+            throw new ServiceException("账号不存在");
+        }
+        if (!passwordEncoder.matches(password, account.getPassword()))
+        {
+            recordLoginFailure(account);
             throw new ServiceException("账号或密码错误");
         }
         if ("1".equals(account.getStatus()))
@@ -219,6 +220,10 @@ public class ExternalManagerAccountServiceImpl implements IExternalManagerAccoun
             throw new ServiceException("原密码错误");
         }
         validatePassword(newPassword);
+        if (passwordEncoder.matches(newPassword, account.getPassword()))
+        {
+            throw new ServiceException("新密码不能与原密码相同");
+        }
         accountMapper.updatePassword(id, passwordEncoder.encode(newPassword));
     }
 

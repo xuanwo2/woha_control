@@ -20,6 +20,8 @@ public class ExternalGiftPackIssue
     /** 接收用户UID */
     @Excel(name = "接收用户UID")
     private Long receiverUid;
+    /** 接收用户Woha ID */
+    private Long receiverChatNo;
     /** 操作账号 */
     @Excel(name = "操作账号")
     private String loginName;

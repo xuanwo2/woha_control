@@ -18,7 +18,7 @@ const messages = {
   'zh-CN': {
     portalName: 'Woha 外管后台', account: '登录账号', password: '密码', login: '登录', logout: '退出',
     oldPassword: '原密码', newPassword: '新密码', setNewPassword: '设置新密码', confirmAndEnter: '确认并进入',
-    enterAccount: '请输入登录账号', enterPassword: '请输入密码', passwordRule: '至少 8 位，且包含字母和数字',
+    enterAccount: '请输入登录账号', enterPassword: '请输入密码', passwordRule: '至少 8 位，且包含字母和数字', passwordCannotMatchOld: '新密码不能与原密码相同',
     portalHint: '外管使用，独立网址与账号，与 Woha 管理后台分开',
     dashboard: '工作台', team: '团队管理', agencies: '公会管理', agencyRevenue: '公会流水',
     giftPacks: '礼包赠送', specialIds: '靓号', bans: '账号封禁', export: '数据导出',
@@ -30,7 +30,7 @@ const messages = {
   en: {
     portalName: 'Woha BD Portal', account: 'Account', password: 'Password', login: 'Log in', logout: 'Log out',
     oldPassword: 'Current password', newPassword: 'New password', setNewPassword: 'Set a new password', confirmAndEnter: 'Confirm and enter',
-    enterAccount: 'Enter your account', enterPassword: 'Enter your password', passwordRule: 'At least 8 characters with letters and numbers',
+    enterAccount: 'Enter your account', enterPassword: 'Enter your password', passwordRule: 'At least 8 characters with letters and numbers', passwordCannotMatchOld: 'The new password must differ from the current password',
     portalHint: 'A separate portal and account for BD operations.',
     dashboard: 'Dashboard', team: 'Team', agencies: 'Agencies', agencyRevenue: 'Agency revenue',
     giftPacks: 'Gift packs', specialIds: 'Special IDs', bans: 'Bans', export: 'Export',
@@ -42,7 +42,7 @@ const messages = {
   ar: {
     portalName: 'بوابة Woha للوكلاء', account: 'اسم الحساب', password: 'كلمة المرور', login: 'تسجيل الدخول', logout: 'تسجيل الخروج',
     oldPassword: 'كلمة المرور الحالية', newPassword: 'كلمة المرور الجديدة', setNewPassword: 'تعيين كلمة مرور جديدة', confirmAndEnter: 'تأكيد والدخول',
-    enterAccount: 'أدخل اسم الحساب', enterPassword: 'أدخل كلمة المرور', passwordRule: 'ثمانية أحرف على الأقل، تتضمن حروفاً وأرقاماً',
+    enterAccount: 'أدخل اسم الحساب', enterPassword: 'أدخل كلمة المرور', passwordRule: 'ثمانية أحرف على الأقل، تتضمن حروفاً وأرقاماً', passwordCannotMatchOld: 'يجب أن تختلف كلمة المرور الجديدة عن كلمة المرور الحالية',
     portalHint: 'بوابة وحساب منفصلان لعمليات الوكلاء.',
     dashboard: 'لوحة التحكم', team: 'الفريق', agencies: 'الوكالات', agencyRevenue: 'إيرادات الوكالات',
     giftPacks: 'حزم الهدايا', specialIds: 'الأرقام المميزة', bans: 'الحظر', export: 'تصدير البيانات',
