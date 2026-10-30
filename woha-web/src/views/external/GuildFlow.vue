@@ -34,4 +34,18 @@ getExternalProfile().then(res => profile.value = res.data || {})
 loadResponsibles(); load()
 </script>
 
-<style scoped>.page{padding:20px}.summary{display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:16px;margin:0 0 16px}.summary div{border:1px solid #dcdfe6;background:#fff;padding:16px}.summary span{display:block;color:#909399}.summary strong{display:block;font-size:24px;margin-top:8px}.toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}.toolbar h2{font-size:18px;margin:0}@media(max-width:900px){.summary{grid-template-columns:repeat(2,1fr)}}</style>
+<style scoped>
+.page{padding:20px}.summary{display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:16px;margin:0 0 16px}.summary div{border:1px solid #dcdfe6;background:#fff;padding:16px}.summary span{display:block;color:#909399}.summary strong{display:block;font-size:24px;margin-top:8px}.toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}.toolbar h2{font-size:18px;margin:0}
+.page :deep(.pagination-container) {
+  display: flex;
+  justify-content: flex-end;
+  height: auto;
+  margin: 12px 0 0;
+  padding: 0 !important;
+  background: transparent;
+}
+.page :deep(.pagination-container .el-pagination) {
+  position: static;
+}
+@media(max-width:900px){.summary{grid-template-columns:repeat(2,1fr)}}
+</style>
