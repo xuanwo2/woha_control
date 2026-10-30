@@ -202,7 +202,7 @@ public class ExternalGiftPackServiceImpl implements IExternalGiftPackService
     private void validateGiftPackRegion(Long giftId, Integer regionId)
     {
         ExternalGiftPack giftPack = giftPackMapper.selectGiftPackById(giftId);
-        if (giftPack == null || !regionId.equals(giftPack.getRegionId()))
+        if (giftPack == null || !regionId.equals(giftPack.getRegionId()) || !"0".equals(giftPack.getStatus()))
         {
             throw new ServiceException("礼包与外管账号所属大区不一致");
         }

@@ -111,7 +111,7 @@ public class ExternalManagerController extends BaseController
             return AjaxResult.success(giftPackService.selectGiftPackList(status, regionId));
         }
         ExternalManagerAccount account = accountService.selectAccountById(currentAccountId());
-        return AjaxResult.success(giftPackService.selectGiftPackList(status, account.getRegionId()));
+        return AjaxResult.success(giftPackService.selectGiftPackList("0", account.getRegionId()));
     }
 
     /** 保存外管礼包 */
@@ -511,7 +511,12 @@ public class ExternalManagerController extends BaseController
     @PutMapping("/accounts/{id}/status")
     public AjaxResult changeStatus(@PathVariable Long id, @RequestBody Map<String, String> request)
     {
-        accountService.updateAccountStatus(id, request.get("status"));
+        String status = request.get("status");
+        accountService.updateAccountStatus(id, status);
+        if ("1".equals(status))
+        {
+            externalTokenService.invalidateAccountTokens(id);
+        }
         return AjaxResult.success();
     }
 

@@ -322,7 +322,7 @@ public class ExternalManagerAccountServiceImpl implements IExternalManagerAccoun
                 throw new ServiceException("礼包额度配置不合法");
             }
             ExternalGiftPack giftPack = giftPackMapper.selectGiftPackById(request.getGiftId());
-            if (giftPack == null || !regionId.equals(giftPack.getRegionId()))
+            if (giftPack == null || !regionId.equals(giftPack.getRegionId()) || !"0".equals(giftPack.getStatus()))
             {
                 throw new ServiceException("礼包与外管账号所属大区不一致");
             }
