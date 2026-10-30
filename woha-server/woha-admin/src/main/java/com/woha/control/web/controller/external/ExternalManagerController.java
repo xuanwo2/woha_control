@@ -56,9 +56,11 @@ import com.woha.control.system.domain.external.ExternalGiftPackQuotaSaveRequest;
 import com.woha.control.system.domain.external.ExternalChatNoAssignRequest;
 import com.woha.control.system.domain.external.ExternalChatNoPoolSaveRequest;
 import com.woha.control.system.domain.external.ExternalAccountBanRequest;
+import com.woha.control.system.domain.external.ExternalReportSubmitRequest;
 import com.woha.control.system.domain.external.ExternalOperationLog;
 import com.woha.control.system.domain.external.ExternalManagerPermission;
 import com.woha.control.system.service.IExternalAccountBanService;
+import com.woha.control.system.service.IExternalReportService;
 import com.woha.control.system.service.ExternalOperationLogService;
 import com.woha.control.system.service.IExternalGiftPackService;
 import com.woha.control.system.service.IExternalChatNoService;
@@ -84,12 +86,14 @@ public class ExternalManagerController extends BaseController
     private final IExternalGiftPackService giftPackService;
     private final IExternalChatNoService chatNoService;
     private final IExternalAccountBanService accountBanService;
+    private final IExternalReportService reportService;
     private final ExternalOperationLogService operationLogService;
 
     public ExternalManagerController(IExternalManagerAccountService accountService,
             IExternalWohaUserService wohaUserService, ExternalTokenService externalTokenService,
             IExternalManagerTeamService teamService, IExternalGuildService guildService,
-            IExternalGiftPackService giftPackService, IExternalChatNoService chatNoService, IExternalAccountBanService accountBanService, ExternalOperationLogService operationLogService)
+            IExternalGiftPackService giftPackService, IExternalChatNoService chatNoService, IExternalAccountBanService accountBanService,
+            IExternalReportService reportService, ExternalOperationLogService operationLogService)
     {
         this.accountService = accountService;
         this.wohaUserService = wohaUserService;
@@ -99,6 +103,7 @@ public class ExternalManagerController extends BaseController
         this.giftPackService = giftPackService;
         this.chatNoService = chatNoService;
         this.accountBanService = accountBanService;
+        this.reportService = reportService;
         this.operationLogService = operationLogService;
     }
 
@@ -216,6 +221,26 @@ public class ExternalManagerController extends BaseController
                 .stream().filter(item -> "BAN".equals(item.getOperationType()) || "UNBAN".equals(item.getOperationType()))
                 .collect(Collectors.toList());
         return AjaxResult.success(records);
+    }
+
+    /** 提交外管举报。 */
+    @PostMapping("/reports")
+    public AjaxResult submitReport(@Valid @RequestBody ExternalReportSubmitRequest request)
+    {
+        ExternalManagerAccount account = accountService.selectAccountById(currentAccountId());
+        requirePermission(account, ExternalManagerPermission.SUBMIT_REPORT);
+        Long reportId = reportService.submit(account, request);
+        operationLogService.record(account, "SUBMIT_REPORT", String.valueOf(request.getTargetChatNo()), request.getViolationType());
+        return AjaxResult.success("举报已提交", Collections.singletonMap("reportId", reportId));
+    }
+
+    /** 查询当前外管账号提交的举报记录。 */
+    @GetMapping("/reports")
+    public AjaxResult reportList()
+    {
+        ExternalManagerAccount account = accountService.selectAccountById(currentAccountId());
+        requirePermission(account, ExternalManagerPermission.SUBMIT_REPORT);
+        return AjaxResult.success(reportService.selectMyReports(account));
     }
 
     /** 管理后台查询外管操作记录。 */

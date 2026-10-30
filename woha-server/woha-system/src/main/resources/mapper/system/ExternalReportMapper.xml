@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.woha.control.system.mapper.ExternalReportMapper">
+    <resultMap id="ExternalReportResult" type="ExternalReport">
+        <id property="id" column="id"/>
+        <result property="reporterAccountId" column="report_uid"/>
+        <result property="targetUid" column="target_uid"/>
+        <result property="targetChatNo" column="target_chat_no"/>
+        <result property="violationType" column="violation_type"/>
+        <result property="description" column="content"/>
+        <result property="evidenceUrls" column="images"/>
+        <result property="status" column="status"/>
+        <result property="regionId" column="region_id"/>
+        <result property="createTime" column="create_time"/>
+        <result property="processTime" column="audit_time"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into user_report_record (type, uid, report_uid, report_type, content, images, status, region_id)
+        values (1, #{targetUid}, #{reporterAccountId}, 0, concat(#{violationType}, '：', #{description}), #{evidenceUrls}, #{status}, #{regionId})
+    </insert>
+
+    <select id="selectByReporterUid" resultMap="ExternalReportResult">
+        select r.id, r.report_uid, r.uid as target_uid, u.chat_no as target_chat_no,
+               substring_index(r.content, '：', 1) as violation_type,
+               case when instr(r.content, '：') > 0 then substring(r.content, instr(r.content, '：') + 1) else r.content end as content,
+               r.images, r.status,
+               r.region_id, r.create_time, r.audit_time
+        from user_report_record r
+        left join `user` u on u.uid = r.uid
+        where r.type = 1 and r.report_uid = #{reporterUid} and r.region_id = #{regionId}
+        order by r.id desc
+    </select>
+</mapper>

@@ -1,7 +1,7 @@
 <template>
   <div class="external-layout" :dir="isRtl ? 'rtl' : 'ltr'">
     <header><strong>{{ t('portalName') }}</strong><span class="hint">{{ t('portalHint') }}</span><span class="profile">{{ profile.realName || profile.loginName }} · {{ roleName }}</span><el-select class="language-select" :model-value="locale" :aria-label="t('language')" @change="setLocale"><el-option v-for="item in EXTERNAL_LOCALES" :key="item.value" :label="item.label" :value="item.value" /></el-select><el-button link @click="logout">{{ t('logout') }}</el-button></header>
-    <aside><RouterLink to="/external/workbench">{{ t('dashboard') }}</RouterLink><RouterLink v-if="canViewTeamGuild" to="/external/team">{{ t('team') }}</RouterLink><RouterLink v-if="canViewTeamGuild" to="/external/guild">{{ t('agencies') }}</RouterLink><RouterLink v-if="canViewGuildFlow" to="/external/guild-flow">{{ t('agencyRevenue') }}</RouterLink><RouterLink v-if="canSendGiftPack" to="/external/gift">{{ t('giftPacks') }}</RouterLink><RouterLink v-if="canAssignChatNo" to="/external/chat-no">{{ t('specialIds') }}</RouterLink><RouterLink v-if="canExecuteBan" to="/external/account-ban">{{ t('bans') }}</RouterLink><RouterLink v-if="canExport" to="/external/export">{{ t('export') }}</RouterLink></aside>
+    <aside><RouterLink to="/external/workbench">{{ t('dashboard') }}</RouterLink><RouterLink v-if="canViewTeamGuild" to="/external/team">{{ t('team') }}</RouterLink><RouterLink v-if="canViewTeamGuild" to="/external/guild">{{ t('agencies') }}</RouterLink><RouterLink v-if="canViewGuildFlow" to="/external/guild-flow">{{ t('agencyRevenue') }}</RouterLink><RouterLink v-if="canSendGiftPack" to="/external/gift">{{ t('giftPacks') }}</RouterLink><RouterLink v-if="canAssignChatNo" to="/external/chat-no">{{ t('specialIds') }}</RouterLink><RouterLink v-if="canExecuteBan || canSubmitReport" to="/external/account-ban">{{ t('bans') }}</RouterLink><RouterLink v-if="canExport" to="/external/export">{{ t('export') }}</RouterLink></aside>
     <main><RouterView /></main>
   </div>
 </template>
@@ -21,6 +21,7 @@ const canViewGuildFlow = computed(() => permissions.value.includes('VIEW_GUILD_F
 const canSendGiftPack = computed(() => permissions.value.includes('SEND_GIFT_PACK'))
 const canAssignChatNo = computed(() => permissions.value.includes('ASSIGN_CHAT_NO'))
 const canExecuteBan = computed(() => permissions.value.includes('EXECUTE_BAN'))
+const canSubmitReport = computed(() => permissions.value.includes('SUBMIT_REPORT'))
 const canExport = computed(() => permissions.value.some(item => item.startsWith('EXPORT_')))
 function logout() { externalLogout().finally(() => { removeExternalToken(); router.replace('/external/login') }) }
 </script>

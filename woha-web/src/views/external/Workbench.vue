@@ -58,7 +58,7 @@ const quotaItems = computed(() => {
 const operationNames = {
   ISSUE_GIFT: '赠送礼包', ASSIGN_CHAT_NO: '分配靓号', BAN: '执行封禁', UNBAN: '解除封禁', CREATE_GUILD: '新建公会',
   CREATE_SUBORDINATE: '新增下级', CHANGE_PASSWORD: '修改密码', EXPORT_GUILD_FLOW: '导出公会流水', EXPORT_GUILD_LIST: '导出公会列表',
-  EXPORT_TEAM_MEMBER: '导出团队成员', EXPORT_GIFT_ISSUE: '导出礼包记录', EXPORT_ACCOUNT_ASSIGNMENT: '导出账号分配记录'
+  EXPORT_TEAM_MEMBER: '导出团队成员', EXPORT_GIFT_ISSUE: '导出礼包记录', EXPORT_ACCOUNT_ASSIGNMENT: '导出账号分配记录', SUBMIT_REPORT: '提交举报'
 }
 const operationName = value => operationNames[value] || value
 const parseTime = value => proxy.parseTime(value)

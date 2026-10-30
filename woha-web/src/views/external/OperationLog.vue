@@ -34,7 +34,8 @@ const types = [
   { value: 'CREATE_SUBORDINATE', label: '新增下级' },
   { value: 'CREATE_GUILD', label: '新建公会' },
   { value: 'ISSUE_GIFT', label: '赠送礼包' },
-  { value: 'ASSIGN_CHAT_NO', label: '分配靓号' }
+  { value: 'ASSIGN_CHAT_NO', label: '分配靓号' },
+  { value: 'SUBMIT_REPORT', label: '提交举报' }
 ]
 const regions = [{ value: 1, label: '全球' }, { value: 2, label: '东南亚' }, { value: 3, label: '华语' }, { value: 4, label: '中东' }, { value: 5, label: '印度' }, { value: 6, label: '越南' }, { value: 7, label: '菲律宾' }]
 const regionName = value => regions.find(item => item.value === value)?.label || value || '--'

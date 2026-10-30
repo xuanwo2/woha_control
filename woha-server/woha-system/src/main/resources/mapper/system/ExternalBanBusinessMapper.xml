@@ -3,6 +3,6 @@
 <mapper namespace="com.woha.control.system.mapper.ExternalBanBusinessMapper">
  <select id="selectUser" resultType="ExternalWohaUser">select uid,chat_no,region_id from `user` where chat_no=#{chatNo} limit 1</select>
  <select id="selectResponsibleUid" resultType="long">select f.responsible_uid from fm_family_user u join fm_family f on f.family_id=u.family_id where u.uid=#{uid} limit 1</select>
- <insert id="insertBan">insert into account_block(uid,chat_no,block_type,block_status,block_minute,block_start_time,block_end_time,block_desc,admin_id,create_time,region_id) values(#{uid},#{chatNo},1,1,#{dayNum} * 1440,now(),date_add(now(),interval #{dayNum} day),#{reason},0,now(),#{regionId})</insert>
+ <insert id="insertBan">insert into account_block(uid,chat_no,block_type,block_status,block_minute,block_start_time,block_end_time,block_desc,evidence_urls,admin_id,create_time,region_id) values(#{uid},#{chatNo},1,1,#{dayNum} * 1440,now(),date_add(now(),interval #{dayNum} day),#{reason},#{evidenceUrls},0,now(),#{regionId})</insert>
  <update id="releaseBan">update account_block set block_status=2 where chat_no=#{chatNo} and block_status=1</update>
 </mapper>

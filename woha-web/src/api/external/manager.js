@@ -70,6 +70,10 @@ export const banExternalAccount = (data) => request({ url: '/external/account-ba
 export const releaseExternalAccountBan = (chatNo) => request({ url: `/external/account-bans/${chatNo}/release`, method: 'post' })
 /** 查询当前外管封禁处理记录 */
 export const listExternalAccountBanRecords = () => request({ url: '/external/account-bans/records', method: 'get' })
+/** 提交外管举报 */
+export const submitExternalReport = (data) => request({ url: '/external/reports', method: 'post', data })
+/** 查询当前外管举报记录 */
+export const listExternalReports = () => request({ url: '/external/reports', method: 'get' })
 /** 查询外管操作记录 */
 export const listExternalOperationLogs = (params) => request({ url: '/external/operation-logs', method: 'get', params, headers: { externalToken: false } })
 /** 导出公会列表 */

@@ -24,7 +24,7 @@ public class ExternalBanBusinessService
     public Long selectResponsibleUid(Long uid) { return mapper.selectResponsibleUid(uid); }
     /** 写入封禁记录。 */
     @DataSource(DataSourceType.SLAVE)
-    public void ban(Long uid, Long chatNo, Integer dayNum, String reason, Integer regionId) { mapper.insertBan(uid, chatNo, dayNum, reason, regionId); }
+    public void ban(Long uid, Long chatNo, Integer dayNum, String reason, String evidenceUrls, Integer regionId) { mapper.insertBan(uid, chatNo, dayNum, reason, evidenceUrls, regionId); }
     /** 解除封禁。 */
     @DataSource(DataSourceType.SLAVE)
     public void release(Long chatNo) { mapper.releaseBan(chatNo); }
