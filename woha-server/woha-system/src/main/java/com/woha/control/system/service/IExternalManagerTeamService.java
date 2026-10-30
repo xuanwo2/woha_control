@@ -15,6 +15,8 @@ public interface IExternalManagerTeamService
     List<Long> resolveVisibleAccountIds(ExternalManagerAccount current);
     /** 查询团队成员 */
     List<ExternalManagerAccount> selectTeamMembers(List<Long> ids, String loginName, String roleCode, String status);
+    /** 批量查询直属下级数量 */
+    List<ExternalManagerAccount> selectDirectSubordinateCounts(List<ExternalManagerAccount> accounts);
     /** 批量查询团队原业务指标 */
     List<ExternalTeamMetric> selectMetrics(List<ExternalManagerAccount> accounts);
 }

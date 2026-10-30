@@ -69,6 +69,8 @@ public class ExternalManagerAccount
     /** 上级外管账号 */
     @Excel(name = "上级账号")
     private String parentLoginName;
+    /** 直属下级数量 */
+    private Integer directSubordinateCount;
     /** 上级外管关联 Woha 用户 ChatNo */
     private Long parentWohaChatNo;
     /** 团队公会数 */

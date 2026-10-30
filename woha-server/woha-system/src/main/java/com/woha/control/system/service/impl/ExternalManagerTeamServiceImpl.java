@@ -53,6 +53,14 @@ public class ExternalManagerTeamServiceImpl implements IExternalManagerTeamServi
 
     @Override
     @DataSource(DataSourceType.SLAVE)
+    public List<ExternalManagerAccount> selectDirectSubordinateCounts(List<ExternalManagerAccount> accounts)
+    {
+        List<Long> parentIds = accounts.stream().map(ExternalManagerAccount::getId).collect(Collectors.toList());
+        return parentIds.isEmpty() ? List.of() : accountMapper.selectDirectSubordinateCounts(parentIds);
+    }
+
+    @Override
+    @DataSource(DataSourceType.SLAVE)
     @Transactional(propagation = Propagation.NOT_SUPPORTED, readOnly = true)
     public List<ExternalTeamMetric> selectMetrics(List<ExternalManagerAccount> accounts)
     {

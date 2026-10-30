@@ -60,6 +60,14 @@
         order by a.id desc
     </select>
 
+    <select id="selectDirectSubordinateCounts" resultType="ExternalManagerAccount">
+        select parent_id as id, count(1) as direct_subordinate_count
+        from external_manager_account
+        where del_flag = '0' and parent_id in
+        <foreach collection="parentIds" item="parentId" open="(" separator="," close=")">#{parentId}</foreach>
+        group by parent_id
+    </select>
+
     <select id="selectAccountById" resultMap="ExternalManagerAccountResult">select <include refid="selectAccountColumns"/> from external_manager_account a left join external_manager_account p on p.id = a.parent_id and p.del_flag = '0' where a.id = #{id} and a.del_flag = '0'</select>
     <select id="selectAccountByLoginName" resultMap="ExternalManagerAccountResult">select <include refid="selectAccountColumns"/> from external_manager_account a left join external_manager_account p on p.id = a.parent_id and p.del_flag = '0' where a.login_name = #{loginName} and a.del_flag = '0'</select>
     <select id="selectAccountByLoginNameForUpdate" resultMap="ExternalManagerAccountResult">select <include refid="selectAccountColumns"/> from external_manager_account a left join external_manager_account p on p.id = a.parent_id and p.del_flag = '0' where a.login_name = #{loginName} and a.del_flag = '0' for update</select>

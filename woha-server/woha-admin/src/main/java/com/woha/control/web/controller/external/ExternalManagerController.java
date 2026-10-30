@@ -335,7 +335,9 @@ public class ExternalManagerController extends BaseController
         List<Long> ids = teamService.resolveVisibleAccountIds(current);
         startPage(); List<ExternalManagerAccount> list = teamService.selectTeamMembers(ids, loginName, roleCode, status); enrichWohaUsers(list);
         Map<Long, ExternalTeamMetric> metrics = teamService.selectMetrics(list).stream().collect(Collectors.toMap(ExternalTeamMetric::getWohaUid, Function.identity()));
-        list.forEach(item -> { ExternalTeamMetric metric = metrics.get(item.getWohaUid()); if (metric != null) { item.setGuildCount(metric.getGuildCount()); item.setMonthFlow(metric.getMonthFlow()); } item.setPassword(null); });
+        Map<Long, Integer> directSubordinateCounts = teamService.selectDirectSubordinateCounts(list).stream()
+                .collect(Collectors.toMap(ExternalManagerAccount::getId, ExternalManagerAccount::getDirectSubordinateCount));
+        list.forEach(item -> { ExternalTeamMetric metric = metrics.get(item.getWohaUid()); if (metric != null) { item.setGuildCount(metric.getGuildCount()); item.setMonthFlow(metric.getMonthFlow()); } item.setDirectSubordinateCount(directSubordinateCounts.getOrDefault(item.getId(), 0)); item.setPassword(null); });
         return getDataTable(list);
     }
 

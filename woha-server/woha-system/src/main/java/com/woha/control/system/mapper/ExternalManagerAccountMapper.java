@@ -27,6 +27,9 @@ public interface ExternalManagerAccountMapper
     List<ExternalManagerAccount> selectTeamAccountList(@Param("ids") Collection<Long> ids,
             @Param("loginName") String loginName, @Param("roleCode") String roleCode, @Param("status") String status);
 
+    /** 批量查询账号直属下级数量 */
+    List<ExternalManagerAccount> selectDirectSubordinateCounts(@Param("parentIds") Collection<Long> parentIds);
+
     /** 根据主键查询外管账号 */
     ExternalManagerAccount selectAccountById(@Param("id") Long id);
 
