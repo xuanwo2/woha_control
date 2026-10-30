@@ -309,8 +309,9 @@ public class ExternalManagerController extends BaseController
         long weekFlow = metrics.values().stream().mapToLong(item -> item.getWeekFlow() == null ? 0 : item.getWeekFlow()).sum();
         long monthFlow = metrics.values().stream().mapToLong(item -> item.getMonthFlow() == null ? 0 : item.getMonthFlow()).sum();
         long totalFlow = metrics.values().stream().mapToLong(item -> item.getTotalFlow() == null ? 0 : item.getTotalFlow()).sum();
+        int anchorCount = teamService.countAnchors(accounts);
         Map<String, Object> result = new java.util.HashMap<>();
-        result.put("bdLeaderCount", accounts.stream().filter(item -> "BD_LEADER".equals(item.getRoleCode())).count()); result.put("bdCount", accounts.stream().filter(item -> "BD".equals(item.getRoleCode())).count()); result.put("guildCount", guildCount); result.put("anchorCount", 0); result.put("dayFlow", dayFlow); result.put("weekFlow", weekFlow); result.put("monthFlow", monthFlow); result.put("totalFlow", totalFlow);
+        result.put("bdLeaderCount", accounts.stream().filter(item -> "BD_LEADER".equals(item.getRoleCode())).count()); result.put("bdCount", accounts.stream().filter(item -> "BD".equals(item.getRoleCode())).count()); result.put("guildCount", guildCount); result.put("anchorCount", anchorCount); result.put("dayFlow", dayFlow); result.put("weekFlow", weekFlow); result.put("monthFlow", monthFlow); result.put("totalFlow", totalFlow);
         result.put("giftPackQuotas", hasPermission(current, ExternalManagerPermission.SEND_GIFT_PACK)
                 ? giftPackService.selectQuotaList(current.getId()) : Collections.emptyList());
         if (hasPermission(current, ExternalManagerPermission.ASSIGN_CHAT_NO))
@@ -384,7 +385,7 @@ public class ExternalManagerController extends BaseController
                 .filter(item -> item.getId().equals(request.getResponsibleAccountId())).findFirst()
                 .orElseThrow(() -> new ServiceException("负责人不在当前账号可选范围内"));
         Long familyId = guildService.createGuild(request, responsible);
-        operationLogService.record(current, "CREATE_GUILD", String.valueOf(familyId), request.getFamilyName());
+        operationLogService.record(current, "CREATE_GUILD", String.valueOf(request.getCaptainChatNo()), request.getFamilyName());
         return AjaxResult.success("创建成功", Collections.singletonMap("familyId", familyId));
     }
 

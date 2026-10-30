@@ -14,4 +14,14 @@
         and bd.status &lt;= 1
         group by bd.uid
     </select>
+
+    <select id="countAnchorsByWohaUids" resultType="int">
+        select count(distinct family_user.uid)
+        from bd_user bd
+        join bd_user_family relation on relation.bd_user_id = bd.bd_user_id
+        join fm_family_user family_user on family_user.family_id = relation.family_id
+            and family_user.anchor_status = 1
+        where bd.uid in <foreach collection="wohaUids" item="uid" open="(" separator="," close=")">#{uid}</foreach>
+        and bd.status &lt;= 1
+    </select>
 </mapper>

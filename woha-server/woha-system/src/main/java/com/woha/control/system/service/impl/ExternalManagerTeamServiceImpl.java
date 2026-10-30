@@ -67,4 +67,13 @@ public class ExternalManagerTeamServiceImpl implements IExternalManagerTeamServi
         Collection<Long> uids = accounts.stream().map(ExternalManagerAccount::getWohaUid).distinct().collect(Collectors.toList());
         return uids.isEmpty() ? List.of() : metricMapper.selectMetricsByWohaUids(uids);
     }
+
+    @Override
+    @DataSource(DataSourceType.SLAVE)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED, readOnly = true)
+    public int countAnchors(List<ExternalManagerAccount> accounts)
+    {
+        Collection<Long> uids = accounts.stream().map(ExternalManagerAccount::getWohaUid).distinct().collect(Collectors.toList());
+        return uids.isEmpty() ? 0 : metricMapper.countAnchorsByWohaUids(uids);
+    }
 }

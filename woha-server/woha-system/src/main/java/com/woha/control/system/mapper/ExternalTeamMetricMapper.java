@@ -16,4 +16,7 @@ public interface ExternalTeamMetricMapper
 {
     /** 按Woha用户批量统计团队公会及流水 */
     List<ExternalTeamMetric> selectMetricsByWohaUids(@Param("wohaUids") Collection<Long> wohaUids);
+
+    /** 按Woha用户批量统计团队公会主播数 */
+    int countAnchorsByWohaUids(@Param("wohaUids") Collection<Long> wohaUids);
 }
