@@ -18,6 +18,7 @@ import com.woha.control.system.domain.external.ExternalGuildVO;
 import com.woha.control.system.domain.external.ExternalManagerAccount;
 import com.woha.control.system.domain.external.ExternalWohaUser;
 import com.woha.control.system.mapper.ExternalGuildMapper;
+import com.woha.control.system.mapper.ExternalBdRelationMapper;
 import com.woha.control.system.service.IExternalGuildService;
 
 /**
@@ -32,13 +33,15 @@ public class ExternalGuildServiceImpl implements IExternalGuildService
     private static final int FAMILY_NO_GENERATE_TIMES = 20;
 
     private final ExternalGuildMapper guildMapper;
+    private final ExternalBdRelationMapper bdRelationMapper;
 
     @Value("${spring.datasource.druid.slave.enabled:false}")
     private boolean slaveEnabled;
 
-    public ExternalGuildServiceImpl(ExternalGuildMapper guildMapper)
+    public ExternalGuildServiceImpl(ExternalGuildMapper guildMapper, ExternalBdRelationMapper bdRelationMapper)
     {
         this.guildMapper = guildMapper;
+        this.bdRelationMapper = bdRelationMapper;
     }
 
     /** 查询新建公会会长预览信息 */
@@ -96,13 +99,19 @@ public class ExternalGuildServiceImpl implements IExternalGuildService
         {
             throw new ServiceException("生成公会号异常");
         }
-        guildMapper.insertFamily(familyNo, captain.getUid(), responsible.getWohaUid(), responsible.getRegionId(), request);
+        Long responsibleBdUserId = bdRelationMapper.selectBdUserIdByUid(responsible.getWohaUid());
+        if (responsibleBdUserId == null)
+        {
+            throw new ServiceException("负责人未关联 BD 用户");
+        }
+        guildMapper.insertFamily(familyNo, captain.getUid(), responsible.getRegionId(), request);
         Long familyId = guildMapper.selectLastInsertId();
         if (familyId == null || familyId <= 0)
         {
             throw new ServiceException("生成公会主键失败");
         }
         guildMapper.insertCaptainMember(familyId, captain.getUid(), responsible.getRegionId());
+        guildMapper.insertResponsibleRelation(familyId, responsibleBdUserId, responsible.getRegionId());
         return familyId;
     }
 

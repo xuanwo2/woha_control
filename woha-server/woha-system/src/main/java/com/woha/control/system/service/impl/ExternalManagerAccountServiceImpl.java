@@ -26,6 +26,7 @@ import com.woha.control.system.domain.external.ExternalGiftPackQuotaSaveRequest;
 import com.woha.control.system.domain.external.ExternalWohaUser;
 import com.woha.control.system.domain.external.ExternalSubordinateCreateRequest;
 import com.woha.control.system.mapper.ExternalManagerAccountMapper;
+import com.woha.control.system.mapper.ExternalBdRelationMapper;
 import com.woha.control.system.mapper.ExternalManagerRolePermissionMapper;
 import com.woha.control.system.mapper.ExternalGiftPackMapper;
 import com.woha.control.system.service.IExternalManagerAccountService;
@@ -45,16 +46,18 @@ public class ExternalManagerAccountServiceImpl implements IExternalManagerAccoun
     private static final String PASSWORD_CHARACTERS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
 
     private final ExternalManagerAccountMapper accountMapper;
+    private final ExternalBdRelationMapper bdRelationMapper;
     private final ExternalManagerRolePermissionMapper rolePermissionMapper;
     private final IExternalWohaUserService wohaUserService;
     private final PasswordEncoder passwordEncoder;
     private final ExternalGiftPackMapper giftPackMapper;
 
-    public ExternalManagerAccountServiceImpl(ExternalManagerAccountMapper accountMapper,
+    public ExternalManagerAccountServiceImpl(ExternalManagerAccountMapper accountMapper, ExternalBdRelationMapper bdRelationMapper,
             ExternalManagerRolePermissionMapper rolePermissionMapper, IExternalWohaUserService wohaUserService,
             PasswordEncoder passwordEncoder, ExternalGiftPackMapper giftPackMapper)
     {
         this.accountMapper = accountMapper;
+        this.bdRelationMapper = bdRelationMapper;
         this.rolePermissionMapper = rolePermissionMapper;
         this.wohaUserService = wohaUserService;
         this.passwordEncoder = passwordEncoder;
@@ -96,6 +99,7 @@ public class ExternalManagerAccountServiceImpl implements IExternalManagerAccoun
         }
         account.setPassword(passwordEncoder.encode(request.getPassword()));
         accountMapper.insertAccount(account);
+        ensureBdRelation(account);
         saveGiftQuotas(account.getId(), request.getRegionId(), request.getGiftQuotas());
     }
 
@@ -120,6 +124,58 @@ public class ExternalManagerAccountServiceImpl implements IExternalManagerAccoun
         SecureRandom random = new SecureRandom(); StringBuilder value = new StringBuilder("Aa1");
         for (int i = 0; i < 9; i++) value.append(PASSWORD_CHARACTERS.charAt(random.nextInt(PASSWORD_CHARACTERS.length())));
         return value.toString();
+    }
+
+    /** 为 BD Leader、BD 外管账号补齐旧 BD 体系关系。 */
+    private void ensureBdRelation(ExternalManagerAccount account)
+    {
+        if (ExternalManagerRole.BD_LEADER.name().equals(account.getRoleCode()))
+        {
+            Integer bdLeaderId = ensureBdLeader(account);
+            ensureBdUser(account, bdLeaderId, 0);
+            return;
+        }
+        if (!ExternalManagerRole.BD.name().equals(account.getRoleCode()))
+        {
+            return;
+        }
+        Integer bdLeaderId = null;
+        if (account.getParentId() != null)
+        {
+            ExternalManagerAccount parent = selectAccountById(account.getParentId());
+            if (ExternalManagerRole.BD_LEADER.name().equals(parent.getRoleCode()))
+            {
+                bdLeaderId = ensureBdLeader(parent);
+            }
+        }
+        ensureBdUser(account, bdLeaderId, 1);
+    }
+
+    /** 确保 BD Leader 在旧 BD 体系中存在。 */
+    private Integer ensureBdLeader(ExternalManagerAccount account)
+    {
+        Integer bdLeaderId = bdRelationMapper.selectBdLeaderIdByUid(account.getWohaUid());
+        if (bdLeaderId != null)
+        {
+            return bdLeaderId;
+        }
+        bdRelationMapper.insertBdLeader(account.getWohaUid(), account.getRegionId(), account.getRemark());
+        bdLeaderId = bdRelationMapper.selectBdLeaderIdByUid(account.getWohaUid());
+        if (bdLeaderId == null)
+        {
+            throw new ServiceException("创建 BD Leader 关联失败");
+        }
+        return bdLeaderId;
+    }
+
+    /** 确保外管账号关联用户在旧 BD 体系中存在。 */
+    private void ensureBdUser(ExternalManagerAccount account, Integer bdLeaderId, int type)
+    {
+        if (bdRelationMapper.selectBdUserIdByUid(account.getWohaUid()) != null)
+        {
+            return;
+        }
+        bdRelationMapper.insertBdUser(account.getWohaUid(), bdLeaderId, type, account.getRegionId(), account.getRemark());
     }
 
     /** 修改外管账号 */

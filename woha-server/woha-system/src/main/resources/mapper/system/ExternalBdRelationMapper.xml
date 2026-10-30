@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.woha.control.system.mapper.ExternalBdRelationMapper">
+    <select id="selectBdLeaderIdByUid" resultType="java.lang.Integer">
+        select bd_leader_id from bd_leader where uid = #{uid} limit 1
+    </select>
+
+    <insert id="insertBdLeader">
+        insert into bd_leader (uid, status, remark, create_time, update_time, region_id)
+        values (#{uid}, 1, #{remark}, now(), now(), #{regionId})
+    </insert>
+
+    <select id="selectBdUserIdByUid" resultType="java.lang.Long">
+        select bd_user_id from bd_user where uid = #{uid} limit 1
+    </select>
+
+    <insert id="insertBdUser">
+        insert into bd_user (uid, bd_leader_id, type, user_manage, invite_approve, family_num,
+                             invite_code, status, enable, remark, join_time, region_id)
+        values (#{uid}, #{bdLeaderId}, #{type}, 0, 0, 0,
+                upper(substring(replace(uuid(), '-', ''), 1, 8)), 0, 1, #{remark}, now(), #{regionId})
+    </insert>
+</mapper>

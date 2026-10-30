@@ -19,10 +19,10 @@
 
     <insert id="insertFamily">
         insert into fm_family
-        (family_no, uid, responsible_uid, family_name, family_logo, status, create_time, update_time,
+        (family_no, uid, family_name, family_logo, status, create_time, update_time,
          user_num, room_num, family_room_num, whatsapp, create_source, region_id)
         values
-        (#{familyNo}, #{captainUid}, #{responsibleUid}, #{request.familyName}, #{request.familyLogo}, 1, now(), now(),
+        (#{familyNo}, #{captainUid}, #{request.familyName}, #{request.familyLogo}, 1, now(), now(),
          1, 0, 0, #{request.whatsapp}, 0, #{regionId})
     </insert>
 
@@ -34,19 +34,27 @@
         values (#{captainUid}, #{familyId}, 0, 0, 0, now(), 1, #{regionId})
     </insert>
 
+    <insert id="insertResponsibleRelation">
+        insert into bd_user_family
+        (bd_user_id, family_id, family_new_user_num, create_time, region_id)
+        values (#{bdUserId}, #{familyId}, 0, now(), #{regionId})
+    </insert>
+
     <sql id="guildFilters">
-        where f.responsible_uid in
+        where responsible_bd.uid in
         <foreach collection="visibleWohaUids" item="uid" open="(" separator="," close=")">#{uid}</foreach>
         <if test="keyword != null and keyword != ''">
             and (cast(f.family_no as char) like concat('%', #{keyword}, '%') or f.family_name like concat('%', #{keyword}, '%'))
         </if>
-        <if test="responsibleWohaUid != null">and f.responsible_uid = #{responsibleWohaUid}</if>
+        <if test="responsibleWohaUid != null">and responsible_bd.uid = #{responsibleWohaUid}</if>
         <if test="createSource != null">and f.create_source = #{createSource}</if>
     </sql>
 
     <sql id="guildJoin">
         from fm_family f
         left join `user` captain on captain.uid = f.uid
+        left join bd_user_family responsible_relation on responsible_relation.family_id = f.family_id
+        left join bd_user responsible_bd on responsible_bd.bd_user_id = responsible_relation.bd_user_id
         left join (
             select family_id, count(1) as anchor_count
             from fm_family_user where anchor_status = 1 group by family_id
@@ -66,7 +74,7 @@
 
     <select id="selectGuildList" resultType="ExternalGuildVO">
         select f.family_id, f.family_no, f.family_name, captain.chat_no as captain_chat_no,
-               captain.nickname as captain_nickname, f.responsible_uid as responsible_woha_uid,
+               captain.nickname as captain_nickname, responsible_bd.uid as responsible_woha_uid,
                ifnull(anchor_stat.anchor_count, 0) as anchor_count,
                ifnull(flow.range_flow, 0) as range_flow, ifnull(flow.week_flow, 0) as week_flow,
                ifnull(flow.month_flow, 0) as month_flow, ifnull(flow.total_flow, 0) as total_flow,

@@ -31,8 +31,7 @@ public interface ExternalGuildMapper
     int countFamilyByNo(@Param("familyNo") Long familyNo);
 
     /** 创建公会 */
-    int insertFamily(@Param("familyNo") Long familyNo, @Param("captainUid") Long captainUid,
-            @Param("responsibleUid") Long responsibleUid, @Param("regionId") Integer regionId,
+    int insertFamily(@Param("familyNo") Long familyNo, @Param("captainUid") Long captainUid, @Param("regionId") Integer regionId,
             @Param("request") ExternalGuildCreateRequest request);
 
     /** 查询当前连接最近生成的公会主键 */
@@ -40,6 +39,10 @@ public interface ExternalGuildMapper
 
     /** 创建会长成员关系 */
     int insertCaptainMember(@Param("familyId") Long familyId, @Param("captainUid") Long captainUid,
+            @Param("regionId") Integer regionId);
+
+    /** 创建公会与负责 BD 的归属关系 */
+    int insertResponsibleRelation(@Param("familyId") Long familyId, @Param("bdUserId") Long bdUserId,
             @Param("regionId") Integer regionId);
 
     /** 查询公会列表 */

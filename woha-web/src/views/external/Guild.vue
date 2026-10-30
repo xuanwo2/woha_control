@@ -72,4 +72,17 @@ getExternalProfile().then(res => profile.value = res.data || {})
 loadResponsibles(); load()
 </script>
 
-<style scoped>.page{padding:20px}.toolbar{display:flex;justify-content:space-between;align-items:center;margin:0 0 16px}.toolbar h2{font-size:18px;margin:0}.cover{display:block;width:120px;height:70px;margin-top:10px;border:1px solid #dcdfe6}.full{width:100%}</style>
+<style scoped>
+.page{padding:20px}.toolbar{display:flex;justify-content:space-between;align-items:center;margin:0 0 16px}.toolbar h2{font-size:18px;margin:0}.cover{display:block;width:120px;height:70px;margin-top:10px;border:1px solid #dcdfe6}.full{width:100%}
+.page :deep(.pagination-container) {
+  display: flex;
+  justify-content: flex-end;
+  height: auto;
+  margin: 12px 0 0;
+  padding: 0 !important;
+  background: transparent;
+}
+.page :deep(.pagination-container .el-pagination) {
+  position: static;
+}
+</style>
