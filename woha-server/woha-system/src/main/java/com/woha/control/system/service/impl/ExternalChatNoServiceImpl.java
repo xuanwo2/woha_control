@@ -1,6 +1,8 @@
 package com.woha.control.system.service.impl;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,7 +45,17 @@ public class ExternalChatNoServiceImpl implements IExternalChatNoService
     @Override
     public List<ExternalChatNoPool> selectPoolList(Long accountId)
     {
-        return chatNoMapper.selectPoolList(accountId);
+        List<ExternalChatNoPool> pools = chatNoMapper.selectPoolList(accountId);
+        List<Long> receiverUids = pools.stream().map(ExternalChatNoPool::getReceiverUid)
+                .filter(java.util.Objects::nonNull).distinct().collect(Collectors.toList());
+        if (receiverUids.isEmpty())
+        {
+            return pools;
+        }
+        Map<Long, Long> receiverChatNoMap = wohaUserService.selectByUids(receiverUids).stream()
+                .collect(Collectors.toMap(ExternalWohaUser::getUid, ExternalWohaUser::getChatNo));
+        pools.forEach(pool -> pool.setReceiverChatNo(receiverChatNoMap.get(pool.getReceiverUid())));
+        return pools;
     }
 
     /** 统计账号靓号总数 */

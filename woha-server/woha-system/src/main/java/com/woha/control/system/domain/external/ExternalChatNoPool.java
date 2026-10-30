@@ -19,6 +19,8 @@ public class ExternalChatNoPool
     private Long accountId;
     /** 接收用户UID */
     private Long receiverUid;
+    /** 接收用户Woha账号 */
+    private Long receiverChatNo;
     /** 分配前用户账号 */
     private Long previousChatNo;
     /** 到期时间 */

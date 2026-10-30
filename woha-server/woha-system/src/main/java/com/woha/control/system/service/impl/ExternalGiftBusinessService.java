@@ -1,7 +1,9 @@
 package com.woha.control.system.service.impl;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -99,12 +101,19 @@ public class ExternalGiftBusinessService
                     throw new ServiceException("VIP发放失败");
                 }
                 businessMapper.insertVipRecord(receiverUid, item.getVipLevel(), item.getDayNum(),
-                        requestNo + item.getSortNo(), regionId);
+                        createVipOrderId(requestNo, item.getSortNo()), regionId);
                 for (ExternalBusinessProp prop : businessMapper.selectVipPrivilegeProps(item.getVipLevel(), regionId))
                 {
                     businessMapper.insertPropGive(receiverUid, prop, item.getDayNum(), 1, regionId, remark);
                 }
             }
         }
+    }
+
+    /** 生成长度固定的VIP记录订单号，适配原业务表的32位字段限制。 */
+    private String createVipOrderId(String requestNo, Integer sortNo)
+    {
+        return UUID.nameUUIDFromBytes((requestNo + ":" + sortNo).getBytes(StandardCharsets.UTF_8))
+                .toString().replace("-", "");
     }
 }

@@ -9,7 +9,7 @@
       <el-table :data="items" v-loading="loading" border size="small" empty-text="暂无靓号">
         <el-table-column prop="chatNo" label="靓号" min-width="110" />
         <el-table-column label="状态" min-width="100"><template #default="{ row }"><el-tag :type="row.status === '0' ? 'success' : 'warning'">{{ row.status === '0' ? '可用' : '已分配' }}</el-tag></template></el-table-column>
-        <el-table-column prop="receiverUid" label="分配对象UID" min-width="130"><template #default="{ row }">{{ row.receiverUid || '--' }}</template></el-table-column>
+        <el-table-column prop="receiverChatNo" label="分配对象 Woha ID" min-width="130"><template #default="{ row }">{{ row.receiverChatNo || '--' }}</template></el-table-column>
         <el-table-column prop="expireTime" label="到期" min-width="160"><template #default="{ row }">{{ row.expireTime || '--' }}</template></el-table-column>
       </el-table>
     </section>
