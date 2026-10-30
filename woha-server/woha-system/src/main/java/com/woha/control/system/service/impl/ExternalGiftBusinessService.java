@@ -57,7 +57,7 @@ public class ExternalGiftBusinessService
         return businessMapper.selectPropsByIds(propIds);
     }
 
-    /** 在原业务库发放金币、装扮和待激活VIP卡 */
+    /** 在原业务库直接发放金币、装扮和VIP */
     @DataSource(DataSourceType.SLAVE)
     @Transactional(propagation = Propagation.REQUIRES_NEW, rollbackFor = Exception.class)
     public void issue(Long accountId, Long receiverUid, Integer regionId, String requestNo, ExternalGiftPack giftPack)
@@ -90,8 +90,20 @@ public class ExternalGiftBusinessService
             }
             else
             {
-                businessMapper.insertVipCard(requestNo + item.getSortNo(), accountId, receiverUid, item.getVipLevel(),
-                        item.getDayNum(), regionId);
+                if (businessMapper.countVipConfig(item.getVipLevel(), regionId) < 1)
+                {
+                    throw new ServiceException("VIP配置不存在");
+                }
+                if (businessMapper.grantVip(receiverUid, item.getVipLevel(), item.getDayNum(), regionId) < 1)
+                {
+                    throw new ServiceException("VIP发放失败");
+                }
+                businessMapper.insertVipRecord(receiverUid, item.getVipLevel(), item.getDayNum(),
+                        requestNo + item.getSortNo(), regionId);
+                for (ExternalBusinessProp prop : businessMapper.selectVipPrivilegeProps(item.getVipLevel(), regionId))
+                {
+                    businessMapper.insertPropGive(receiverUid, prop, item.getDayNum(), 1, regionId, remark);
+                }
             }
         }
     }

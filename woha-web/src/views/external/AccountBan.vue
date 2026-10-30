@@ -89,7 +89,11 @@ async function loadReportRecords() {
 
 async function ban() {
   if (!form.chatNo || !form.reason) return ElMessage.warning('请填写用户 Woha ID 和处理说明')
-  await ElMessageBox.confirm(`确认封禁账号 ${form.chatNo} ${form.dayNum} 天？`, '提示', { type: 'warning' })
+  await ElMessageBox.confirm(`确认封禁账号 ${form.chatNo} ${form.dayNum} 天？`, '提示', {
+    type: 'warning',
+    confirmButtonText: '确定',
+    cancelButtonText: '取消'
+  })
   await banExternalAccount(form)
   ElMessage.success('封禁成功')
   form.reason = ''
@@ -99,7 +103,11 @@ async function ban() {
 }
 
 async function release(row) {
-  await ElMessageBox.confirm(`确认解除账号 ${row.target} 的封禁？`, '提示', { type: 'warning' })
+  await ElMessageBox.confirm(`确认解除账号 ${row.target} 的封禁？`, '提示', {
+    type: 'warning',
+    confirmButtonText: '确定',
+    cancelButtonText: '取消'
+  })
   await releaseExternalAccountBan(row.target)
   ElMessage.success('已解除封禁')
   loadRecords()
