@@ -51,7 +51,13 @@
             and (cast(f.family_no as char) like concat('%', #{keyword}, '%') or f.family_name like concat('%', #{keyword}, '%'))
         </if>
         <if test="responsibleWohaUid != null">and responsible_bd.uid = #{responsibleWohaUid}</if>
-        <if test="createSource != null">and f.create_source = #{createSource}</if>
+        <if test="createSource != null">
+            <choose>
+                <when test="createSource == 0">and f.create_source = 0 and f.operation_id is null</when>
+                <when test="createSource == 2">and (f.create_source = 2 or (f.create_source = 0 and f.operation_id is not null))</when>
+                <otherwise>and f.create_source = #{createSource}</otherwise>
+            </choose>
+        </if>
     </sql>
 
     <sql id="guildJoin">
@@ -83,7 +89,8 @@
                ifnull(anchor_stat.anchor_count, 0) as anchor_count,
                ifnull(flow.range_flow, 0) as range_flow, ifnull(flow.week_flow, 0) as week_flow,
                ifnull(flow.month_flow, 0) as month_flow, ifnull(flow.total_flow, 0) as total_flow,
-               case f.create_source when 0 then '外管创建' when 1 then '入驻申请' when 2 then '运营创建' else '未知' end as create_method,
+               case when f.create_source = 2 or (f.create_source = 0 and f.operation_id is not null) then '运营创建'
+                    when f.create_source = 0 then '外管创建' when f.create_source = 1 then '入驻申请' else '未知' end as create_method,
                case f.status when 1 then '正常' when 2 then '隐藏' when 3 then '会长解散' when 4 then '管理员解散' else '异常' end as status_name,
                f.create_time
         <include refid="guildJoin"/>
