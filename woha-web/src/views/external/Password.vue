@@ -18,6 +18,7 @@
 <script setup>
 import { changeExternalPassword } from '@/api/external/manager'
 import { EXTERNAL_LOCALES, useExternalI18n } from '@/i18n/external'
+import { removeExternalToken } from '@/utils/externalAuth'
 const router = useRouter(); const formRef = ref(); const form = reactive({ oldPassword: '', newPassword: '' });
 // 聚焦前保持只读，避免 Safari 在页面加载时自动生成并填充强密码。
 const oldPasswordEditable = ref(false)
@@ -29,6 +30,6 @@ function validateNewPassword(rule, value, callback) {
   callback()
 }
 const rules = computed(() => ({ oldPassword: [{ required: true, message: t('enterPassword'), trigger: 'blur' }], newPassword: [{ required: true, validator: validateNewPassword, trigger: 'blur' }] }))
-function submit() { formRef.value.validate(async valid => { if (!valid) return; await changeExternalPassword(form); router.replace('/external/workbench') }) }
+function submit() { formRef.value.validate(async valid => { if (!valid) return; await changeExternalPassword(form); removeExternalToken(); router.replace('/external/login') }) }
 </script>
 <style scoped>.password-page { position:relative; max-width:480px; margin:100px auto; }.language-select { position:fixed; top:20px; right:28px; width:112px; }.password-page[dir='rtl'] .language-select { right:auto; left:28px; }</style>

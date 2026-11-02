@@ -470,6 +470,7 @@ public class ExternalManagerController extends BaseController
             throw new ServiceException("外管账号不存在");
         }
         accountService.changePassword(accounts.get(0).getId(), request.getOldPassword(), request.getNewPassword());
+        externalTokenService.invalidateAccountTokens(accounts.get(0).getId());
         operationLogService.record(accounts.get(0), "CHANGE_PASSWORD", "自身账号", "修改密码");
         return AjaxResult.success();
     }
