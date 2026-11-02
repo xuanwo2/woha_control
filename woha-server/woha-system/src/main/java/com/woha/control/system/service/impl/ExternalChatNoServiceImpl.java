@@ -1,20 +1,14 @@
 package com.woha.control.system.service.impl;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+
+import com.woha.control.system.domain.external.*;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.woha.control.common.annotation.DataSource;
 import com.woha.control.common.enums.DataSourceType;
 import com.woha.control.common.exception.ServiceException;
-import com.woha.control.system.domain.external.ExternalChatNoAssignRequest;
-import com.woha.control.system.domain.external.ExternalChatNoPool;
-import com.woha.control.system.domain.external.ExternalChatNoPoolSaveRequest;
-import com.woha.control.system.domain.external.ExternalManagerAccount;
-import com.woha.control.system.domain.external.ExternalManagerPermission;
-import com.woha.control.system.domain.external.ExternalWohaUser;
 import com.woha.control.system.mapper.ExternalChatNoMapper;
 import com.woha.control.system.service.IExternalChatNoService;
 import com.woha.control.system.service.IExternalWohaUserService;
@@ -45,17 +39,7 @@ public class ExternalChatNoServiceImpl implements IExternalChatNoService
     @Override
     public List<ExternalChatNoPool> selectPoolList(Long accountId)
     {
-        List<ExternalChatNoPool> pools = chatNoMapper.selectPoolList(accountId);
-        List<Long> receiverUids = pools.stream().map(ExternalChatNoPool::getReceiverUid)
-                .filter(java.util.Objects::nonNull).distinct().collect(Collectors.toList());
-        if (receiverUids.isEmpty())
-        {
-            return pools;
-        }
-        Map<Long, Long> receiverChatNoMap = wohaUserService.selectByUids(receiverUids).stream()
-                .collect(Collectors.toMap(ExternalWohaUser::getUid, ExternalWohaUser::getChatNo));
-        pools.forEach(pool -> pool.setReceiverChatNo(receiverChatNoMap.get(pool.getReceiverUid())));
-        return pools;
+        return chatNoMapper.selectPoolList(accountId);
     }
 
     /** 统计账号靓号总数 */

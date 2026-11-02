@@ -9,7 +9,7 @@
       <el-table :data="items" v-loading="loading" border size="small" :empty-text="t('noSpecialIds')">
         <el-table-column prop="chatNo" :label="t('specialId')" min-width="110" />
         <el-table-column :label="t('status')" min-width="100"><template #default="{ row }"><el-tag :type="row.status === '0' ? 'success' : 'warning'">{{ row.status === '0' ? t('available') : t('allocated') }}</el-tag></template></el-table-column>
-        <el-table-column prop="receiverChatNo" :label="t('assignTo')" min-width="150"><template #default="{ row }">{{ row.receiverChatNo ?? '--' }}</template></el-table-column>
+        <el-table-column prop="previousChatNo" :label="t('originalReceiverId')" min-width="150"><template #default="{ row }">{{ row.previousChatNo ?? '--' }}</template></el-table-column>
         <el-table-column prop="expireTime" :label="t('expiresAt')" min-width="160"><template #default="{ row }">{{ row.expireTime || '--' }}</template></el-table-column>
       </el-table>
     </section>
