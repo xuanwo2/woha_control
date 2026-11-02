@@ -15,6 +15,23 @@
         group by bd.uid
     </select>
 
+    <select id="countGuildsByWohaUids" resultType="int">
+        select count(1)
+        from (
+            select relation.family_id
+            from bd_user bd
+            join bd_user_family relation on relation.bd_user_id = bd.bd_user_id
+            where bd.uid in
+            <foreach collection="wohaUids" item="uid" open="(" separator="," close=")">#{uid}</foreach>
+            and bd.status &lt;= 1
+            union
+            select family_id
+            from fm_family
+            where uid in
+            <foreach collection="wohaUids" item="uid" open="(" separator="," close=")">#{uid}</foreach>
+        ) guilds
+    </select>
+
     <select id="countAnchorsByWohaUids" resultType="int">
         select count(distinct family_user.uid)
         from bd_user bd

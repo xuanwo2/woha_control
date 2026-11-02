@@ -304,7 +304,7 @@ public class ExternalManagerController extends BaseController
         ExternalManagerAccount current = accountService.selectAccountById(currentAccountId());
         List<ExternalManagerAccount> accounts = teamService.selectTeamMembers(teamService.resolveVisibleAccountIds(current), null, null, null);
         Map<Long, ExternalTeamMetric> metrics = teamService.selectMetrics(accounts).stream().collect(Collectors.toMap(ExternalTeamMetric::getWohaUid, Function.identity()));
-        long guildCount = metrics.values().stream().mapToLong(item -> item.getGuildCount() == null ? 0 : item.getGuildCount()).sum();
+        long guildCount = teamService.countGuilds(accounts);
         long dayFlow = metrics.values().stream().mapToLong(item -> item.getDayFlow() == null ? 0 : item.getDayFlow()).sum();
         long weekFlow = metrics.values().stream().mapToLong(item -> item.getWeekFlow() == null ? 0 : item.getWeekFlow()).sum();
         long monthFlow = metrics.values().stream().mapToLong(item -> item.getMonthFlow() == null ? 0 : item.getMonthFlow()).sum();

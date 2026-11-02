@@ -19,6 +19,8 @@ public interface IExternalManagerTeamService
     List<ExternalManagerAccount> selectDirectSubordinateCounts(List<ExternalManagerAccount> accounts);
     /** 批量查询团队原业务指标 */
     List<ExternalTeamMetric> selectMetrics(List<ExternalManagerAccount> accounts);
+    /** 合并去重统计团队绑定及团队成员担任会长的公会数 */
+    int countGuilds(List<ExternalManagerAccount> accounts);
     /** 统计团队公会主播数 */
     int countAnchors(List<ExternalManagerAccount> accounts);
 }

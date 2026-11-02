@@ -41,8 +41,12 @@
     </insert>
 
     <sql id="guildFilters">
-        where responsible_bd.uid in
-        <foreach collection="visibleWohaUids" item="uid" open="(" separator="," close=")">#{uid}</foreach>
+        where (
+            responsible_bd.uid in
+            <foreach collection="visibleWohaUids" item="uid" open="(" separator="," close=")">#{uid}</foreach>
+            or f.uid in
+            <foreach collection="visibleWohaUids" item="uid" open="(" separator="," close=")">#{uid}</foreach>
+        )
         <if test="keyword != null and keyword != ''">
             and (cast(f.family_no as char) like concat('%', #{keyword}, '%') or f.family_name like concat('%', #{keyword}, '%'))
         </if>
