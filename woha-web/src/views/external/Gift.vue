@@ -1,25 +1,25 @@
 <template>
   <div class="page">
     <section class="quota-grid">
-      <div v-for="item in configuredPacks" :key="item.id" class="quota-card"><span>{{ item.giftName }} · 剩余 / 额度</span><strong>{{ quotaText(item.id) }}</strong><small>每人限领 {{ item.receiveLimit || 0 }} 次</small></div>
+      <div v-for="item in configuredPacks" :key="item.id" class="quota-card"><span>{{ item.giftName }} · {{ t('quotaRemaining') }}</span><strong>{{ quotaText(item.id) }}</strong><small>{{ t('perPersonLimit').replace('{count}', item.receiveLimit || 0) }}</small></div>
     </section>
     <section v-if="canIssue" class="issue-panel">
-      <h2>赠送礼包</h2>
+      <h2>{{ t('giveGiftPack') }}</h2>
       <el-form label-width="86px" class="issue-form">
-        <el-form-item label="用户 Woha ID"><el-input v-model.number="form.receiverChatNo" placeholder="请输入用户 Woha ID" /></el-form-item>
-        <el-form-item label="礼包"><el-select v-model="form.giftId" placeholder="请选择礼包"><el-option v-for="item in configuredPacks" :key="item.id" :label="packOptionLabel(item)" :value="item.id" :disabled="item.quotaCount <= item.usedCount" /></el-select></el-form-item>
-        <el-form-item label="内容"><span class="content-text">{{ selectedPack?.content || selectedPack?.giftName || '--' }}</span></el-form-item>
-        <el-form-item><el-button type="primary" :loading="issuing" @click="issue">赠送</el-button></el-form-item>
+        <el-form-item :label="t('linkedWohaId')"><el-input v-model.number="form.receiverChatNo" :placeholder="t('enter')" /></el-form-item>
+        <el-form-item :label="t('giftPack')"><el-select v-model="form.giftId" :placeholder="t('selectGiftPack')"><el-option v-for="item in configuredPacks" :key="item.id" :label="packOptionLabel(item)" :value="item.id" :disabled="item.quotaCount <= item.usedCount" /></el-select></el-form-item>
+        <el-form-item :label="t('content')"><span class="content-text">{{ selectedPack?.content || selectedPack?.giftName || '--' }}</span></el-form-item>
+        <el-form-item><el-button type="primary" :loading="issuing" @click="issue">{{ t('give') }}</el-button></el-form-item>
       </el-form>
     </section>
     <section class="record-panel">
-      <h2>赠送记录</h2>
-      <el-table :data="issues" border size="small" empty-text="暂无赠送记录">
-        <el-table-column prop="createTime" label="时间" min-width="155" />
-        <el-table-column prop="receiverChatNo" label="对象" min-width="105" />
-        <el-table-column prop="giftName" label="礼包" min-width="120" />
-        <el-table-column prop="loginName" label="操作人" min-width="110" />
-        <el-table-column label="状态" width="100"><template #default="{ row }"><el-tag :type="row.status === '0' ? 'success' : 'danger'">{{ row.status === '0' ? '已发放' : '失败' }}</el-tag></template></el-table-column>
+      <h2>{{ t('giftRecords') }}</h2>
+      <el-table :data="issues" border size="small" :empty-text="t('noOperations')">
+        <el-table-column prop="createTime" :label="t('time')" min-width="155" />
+        <el-table-column prop="receiverChatNo" :label="t('target')" min-width="105" />
+        <el-table-column prop="giftName" :label="t('giftPack')" min-width="120" />
+        <el-table-column prop="loginName" :label="t('operator')" min-width="110" />
+        <el-table-column :label="t('status')" width="100"><template #default="{ row }"><el-tag :type="row.status === '0' ? 'success' : 'danger'">{{ row.status === '0' ? t('issued') : t('failed') }}</el-tag></template></el-table-column>
       </el-table>
     </section>
   </div>
@@ -28,8 +28,10 @@
 <script setup>
 import { ElMessage } from 'element-plus'
 import { getExternalProfile, issueExternalGiftPack, listExternalGiftPackIssues, listExternalGiftPackQuotas, listExternalGiftPacks } from '@/api/external/manager'
+import { useExternalI18n } from '@/i18n/external'
 
 const packs = ref([])
+const { t } = useExternalI18n()
 const quotas = ref([])
 const issues = ref([])
 const issuing = ref(false)
@@ -46,7 +48,7 @@ const configuredPacks = computed(() => packs.value.map(pack => {
 const selectedPack = computed(() => configuredPacks.value.find(item => item.id === form.giftId))
 const canIssue = computed(() => String(profile.value.permissions || '').split(',').includes('SEND_GIFT_PACK'))
 const quotaText = giftId => { const item = configuredPacks.value.find(value => value.id === giftId); return item ? `${Math.max(0, item.quotaCount - item.usedCount)} / ${item.quotaCount}` : '0 / 0' }
-const packOptionLabel = item => item.quotaCount <= item.usedCount ? `${item.giftName}（额度不足）` : item.giftName
+const packOptionLabel = item => item.quotaCount <= item.usedCount ? `${item.giftName} (${t('quotaInsufficient')})` : item.giftName
 
 async function load() {
   const [packRes, quotaRes, issueRes] = await Promise.all([listExternalGiftPacks({ status: '0' }), listExternalGiftPackQuotas(), listExternalGiftPackIssues()])
@@ -56,12 +58,12 @@ async function load() {
 }
 
 async function issue() {
-  if (!form.receiverChatNo || !form.giftId) return ElMessage.warning('请填写用户 Woha ID 并选择礼包')
-  if (!selectedPack.value || selectedPack.value.quotaCount <= selectedPack.value.usedCount) return ElMessage.warning('当前礼包额度不足，请在管理后台为该外管账号配置可赠份数')
+  if (!form.receiverChatNo || !form.giftId) return ElMessage.warning(t('fillUserAndGift'))
+  if (!selectedPack.value || selectedPack.value.quotaCount <= selectedPack.value.usedCount) return ElMessage.warning(t('insufficientQuota'))
   issuing.value = true
   try {
     await issueExternalGiftPack(form)
-    ElMessage.success('礼包已发放')
+    ElMessage.success(t('giftIssued'))
     Object.assign(form, { receiverChatNo: undefined, giftId: undefined })
     load()
   } finally {

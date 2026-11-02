@@ -1,58 +1,58 @@
 <template>
   <div class="page">
     <section class="authorization-panel">
-      <h2>我的封禁授权</h2>
+      <h2>{{ t('myBanAuthorization') }}</h2>
       <div class="authorization-grid">
-        <div><span>可执行</span><strong>{{ canBan ? '账号封禁' : '无' }}</strong></div>
-        <div><span>最长时长</span><strong>7 天</strong></div>
-        <div><span>每日上限</span><strong>10 次</strong></div>
-        <div><span>对象范围</span><strong>本团队下级或公会成员</strong></div>
+        <div><span>{{ t('executable') }}</span><strong>{{ canBan ? t('accountBan') : t('none') }}</strong></div>
+        <div><span>{{ t('maximumDuration') }}</span><strong>{{ t('day7') }}</strong></div>
+        <div><span>{{ t('dailyLimit') }}</span><strong>10</strong></div>
+        <div><span>{{ t('targetScope') }}</span><strong>{{ t('teamOrGuildMembers') }}</strong></div>
       </div>
     </section>
 
     <section class="action-panel">
-      <h2>执行封禁</h2>
+      <h2>{{ t('executeBan') }}</h2>
       <el-form :model="form" label-width="92px" class="ban-form">
-        <el-form-item label="用户 Woha ID"><el-input v-model.number="form.chatNo" placeholder="请输入用户 Woha ID" /></el-form-item>
-        <el-form-item label="违规类型"><el-select v-model="form.violationType"><el-option v-for="item in violationTypes" :key="item" :label="item" :value="item" /></el-select></el-form-item>
-        <el-form-item label="时长"><el-radio-group v-model="form.dayNum"><el-radio :label="1">1 天</el-radio><el-radio :label="3">3 天</el-radio><el-radio :label="7">7 天</el-radio></el-radio-group></el-form-item>
-        <el-form-item label="说明"><el-input v-model="form.reason" type="textarea" :rows="3" maxlength="200" show-word-limit placeholder="请输入处理说明" /></el-form-item>
-        <el-form-item label="证据图片"><el-upload v-model:file-list="banEvidenceFiles" :action="uploadUrl" name="uploadFile" :headers="uploadHeaders" list-type="picture-card" accept="image/png,image/jpeg" :limit="3" :before-upload="beforeEvidenceUpload" :on-success="banEvidenceSuccess" :on-remove="removeBanEvidence" :on-exceed="evidenceExceed"><el-icon><Plus /></el-icon></el-upload></el-form-item>
-        <el-form-item><el-button type="danger" :disabled="!canBan" @click="ban">执行封禁</el-button></el-form-item>
+        <el-form-item :label="t('userWohaId')"><el-input v-model.number="form.chatNo" :placeholder="t('enterUserWohaId')" /></el-form-item>
+        <el-form-item :label="t('violationType')"><el-select v-model="form.violationType"><el-option v-for="item in violationTypes" :key="item.value" :label="item.label" :value="item.value" /></el-select></el-form-item>
+        <el-form-item :label="t('duration')"><el-radio-group v-model="form.dayNum"><el-radio :label="1">{{ t('day1') }}</el-radio><el-radio :label="3">{{ t('day3') }}</el-radio><el-radio :label="7">{{ t('day7') }}</el-radio></el-radio-group></el-form-item>
+        <el-form-item :label="t('reason')"><el-input v-model="form.reason" type="textarea" :rows="3" maxlength="200" show-word-limit :placeholder="t('enterProcessingDescription')" /></el-form-item>
+        <el-form-item :label="t('evidenceImages')"><el-upload v-model:file-list="banEvidenceFiles" :action="uploadUrl" name="uploadFile" :headers="uploadHeaders" list-type="picture-card" accept="image/png,image/jpeg" :limit="3" :before-upload="beforeEvidenceUpload" :on-success="banEvidenceSuccess" :on-remove="removeBanEvidence" :on-exceed="evidenceExceed"><el-icon><Plus /></el-icon></el-upload></el-form-item>
+        <el-form-item><el-button type="danger" :disabled="!canBan" @click="ban">{{ t('executeBan') }}</el-button></el-form-item>
       </el-form>
     </section>
 
     <section class="record-panel">
-      <h2>我的封禁记录</h2>
-      <el-table :data="records" border size="small" empty-text="暂无处理记录">
-        <el-table-column prop="createTime" label="时间" min-width="155" />
-        <el-table-column label="类型" width="100"><template #default="{ row }">{{ row.operationType === 'BAN' ? '执行封禁' : '解除封禁' }}</template></el-table-column>
-        <el-table-column prop="target" label="对象" width="120" />
-        <el-table-column prop="content" label="说明" min-width="180" />
-        <el-table-column label="操作" width="100" align="center"><template #default="{ row }"><el-button v-if="canBan && row.operationType === 'BAN'" link type="danger" @click="release(row)">解除</el-button></template></el-table-column>
+      <h2>{{ t('myBanRecords') }}</h2>
+      <el-table :data="records" border size="small" :empty-text="t('noProcessingRecords')">
+        <el-table-column prop="createTime" :label="t('time')" min-width="155" />
+        <el-table-column :label="t('banType')" width="100"><template #default="{ row }">{{ row.operationType === 'BAN' ? t('executeBan') : t('releaseBan') }}</template></el-table-column>
+        <el-table-column prop="target" :label="t('target')" width="120" />
+        <el-table-column prop="content" :label="t('reason')" min-width="180" />
+        <el-table-column :label="t('operation')" width="100" align="center"><template #default="{ row }"><el-button v-if="canBan && row.operationType === 'BAN'" link type="danger" @click="release(row)">{{ t('releaseBan') }}</el-button></template></el-table-column>
       </el-table>
     </section>
 
     <section v-if="canReport" class="report-panel">
-      <h2>提交举报</h2>
+      <h2>{{ t('submitReport') }}</h2>
       <el-form :model="reportForm" label-width="92px" class="ban-form">
-        <el-form-item label="用户 Woha ID"><el-input v-model.number="reportForm.targetChatNo" placeholder="请输入被举报用户 Woha ID" /></el-form-item>
-        <el-form-item label="违规类型"><el-select v-model="reportForm.violationType"><el-option v-for="item in violationTypes" :key="item" :label="item" :value="item" /></el-select></el-form-item>
-        <el-form-item label="举报说明"><el-input v-model="reportForm.description" type="textarea" :rows="3" maxlength="200" show-word-limit placeholder="请输入举报说明" /></el-form-item>
-        <el-form-item label="证据图片"><el-upload v-model:file-list="evidenceFiles" :action="uploadUrl" name="uploadFile" :headers="uploadHeaders" list-type="picture-card" accept="image/png,image/jpeg" :limit="3" :before-upload="beforeEvidenceUpload" :on-success="reportEvidenceSuccess" :on-remove="removeReportEvidence" :on-exceed="evidenceExceed"><el-icon><Plus /></el-icon></el-upload></el-form-item>
-        <el-form-item><el-button type="primary" @click="submitReport">提交举报</el-button></el-form-item>
+        <el-form-item :label="t('reportedUserWohaId')"><el-input v-model.number="reportForm.targetChatNo" :placeholder="t('enterReportedUserWohaId')" /></el-form-item>
+        <el-form-item :label="t('violationType')"><el-select v-model="reportForm.violationType"><el-option v-for="item in violationTypes" :key="item.value" :label="item.label" :value="item.value" /></el-select></el-form-item>
+        <el-form-item :label="t('reportReason')"><el-input v-model="reportForm.description" type="textarea" :rows="3" maxlength="200" show-word-limit :placeholder="t('enterReportDescription')" /></el-form-item>
+        <el-form-item :label="t('evidenceImages')"><el-upload v-model:file-list="evidenceFiles" :action="uploadUrl" name="uploadFile" :headers="uploadHeaders" list-type="picture-card" accept="image/png,image/jpeg" :limit="3" :before-upload="beforeEvidenceUpload" :on-success="reportEvidenceSuccess" :on-remove="removeReportEvidence" :on-exceed="evidenceExceed"><el-icon><Plus /></el-icon></el-upload></el-form-item>
+        <el-form-item><el-button type="primary" @click="submitReport">{{ t('submitReport') }}</el-button></el-form-item>
       </el-form>
     </section>
 
     <section v-if="canReport" class="report-record-panel">
-      <h2>我的举报记录</h2>
-      <el-table :data="reportRecords" border size="small" empty-text="暂无举报记录">
-        <el-table-column prop="createTime" label="提交时间" min-width="155" />
-        <el-table-column prop="targetChatNo" label="对象" width="120" />
-        <el-table-column prop="violationType" label="违规类型" width="120" />
-        <el-table-column prop="description" label="说明" min-width="180" show-overflow-tooltip />
-        <el-table-column label="状态" width="100"><template #default="{ row }"><el-tag :type="reportStatusType(row.status)">{{ reportStatusName(row.status) }}</el-tag></template></el-table-column>
-        <el-table-column prop="processRemark" label="处理说明" min-width="160" show-overflow-tooltip />
+      <h2>{{ t('myReportRecords') }}</h2>
+      <el-table :data="reportRecords" border size="small" :empty-text="t('noReportRecords')">
+        <el-table-column prop="createTime" :label="t('submitTime')" min-width="155" />
+        <el-table-column prop="targetChatNo" :label="t('target')" width="120" />
+        <el-table-column prop="violationType" :label="t('violationType')" width="120" />
+        <el-table-column prop="description" :label="t('reason')" min-width="180" show-overflow-tooltip />
+        <el-table-column :label="t('status')" width="100"><template #default="{ row }"><el-tag :type="reportStatusType(row.status)">{{ reportStatusName(row.status) }}</el-tag></template></el-table-column>
+        <el-table-column prop="processRemark" :label="t('processingReason')" min-width="160" show-overflow-tooltip />
       </el-table>
     </section>
   </div>
@@ -63,14 +63,16 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import { getExternalToken } from '@/utils/externalAuth'
 import { banExternalAccount, getExternalProfile, listExternalAccountBanRecords, listExternalReports, releaseExternalAccountBan, submitExternalReport } from '@/api/external/manager'
+import { useExternalI18n } from '@/i18n/external'
 
+const { t } = useExternalI18n()
 const form = reactive({ chatNo: undefined, dayNum: 1, violationType: '其他违规', reason: '', evidenceUrls: [] })
 const profile = ref({})
 const records = ref([])
 const reportRecords = ref([])
 const banEvidenceFiles = ref([])
 const evidenceFiles = ref([])
-const violationTypes = ['广告引流', '色情', '欺诈', '其他违规']
+const violationTypes = computed(() => [{ value: '广告引流', label: t('advertising') }, { value: '色情', label: t('pornography') }, { value: '欺诈', label: t('fraud') }, { value: '其他违规', label: t('otherViolation') }])
 const reportForm = reactive({ targetChatNo: undefined, violationType: '其他违规', description: '', evidenceUrls: [] })
 const canBan = computed(() => String(profile.value.permissions || '').split(',').includes('EXECUTE_BAN'))
 const canReport = computed(() => String(profile.value.permissions || '').split(',').includes('SUBMIT_REPORT'))
@@ -88,14 +90,14 @@ async function loadReportRecords() {
 }
 
 async function ban() {
-  if (!form.chatNo || !form.reason) return ElMessage.warning('请填写用户 Woha ID 和处理说明')
-  await ElMessageBox.confirm(`确认封禁账号 ${form.chatNo} ${form.dayNum} 天？`, '提示', {
+  if (!form.chatNo || !form.reason) return ElMessage.warning(t('enterUserAndReason'))
+  await ElMessageBox.confirm(t('confirmBan').replace('{account}', form.chatNo).replace('{days}', form.dayNum), t('prompt'), {
     type: 'warning',
-    confirmButtonText: '确定',
-    cancelButtonText: '取消'
+    confirmButtonText: t('confirm'),
+    cancelButtonText: t('cancel')
   })
   await banExternalAccount(form)
-  ElMessage.success('封禁成功')
+  ElMessage.success(t('banSucceeded'))
   form.reason = ''
   form.evidenceUrls = []
   banEvidenceFiles.value = []
@@ -103,19 +105,19 @@ async function ban() {
 }
 
 async function release(row) {
-  await ElMessageBox.confirm(`确认解除账号 ${row.target} 的封禁？`, '提示', {
+  await ElMessageBox.confirm(t('confirmUnban').replace('{account}', row.target), t('prompt'), {
     type: 'warning',
-    confirmButtonText: '确定',
-    cancelButtonText: '取消'
+    confirmButtonText: t('confirm'),
+    cancelButtonText: t('cancel')
   })
   await releaseExternalAccountBan(row.target)
-  ElMessage.success('已解除封禁')
+  ElMessage.success(t('unbanned'))
   loadRecords()
 }
 
 function beforeEvidenceUpload(file) {
   if (file.size / 1024 / 1024 > 5) {
-    ElMessage.error('证据图片不能超过5MB')
+    ElMessage.error(t('evidenceSizeLimit'))
     return false
   }
   return true
@@ -123,7 +125,7 @@ function beforeEvidenceUpload(file) {
 
 function banEvidenceSuccess(response) {
   if (response.code !== 200 || !response.path) {
-    ElMessage.error(response.msg || '证据图片上传失败')
+    ElMessage.error(response.msg || t('evidenceUploadFailed'))
     return
   }
   form.evidenceUrls.push(response.path)
@@ -135,7 +137,7 @@ function removeBanEvidence(file) {
 
 function reportEvidenceSuccess(response) {
   if (response.code !== 200 || !response.path) {
-    ElMessage.error(response.msg || '证据图片上传失败')
+    ElMessage.error(response.msg || t('evidenceUploadFailed'))
     return
   }
   reportForm.evidenceUrls.push(response.path)
@@ -146,19 +148,19 @@ function removeReportEvidence(file) {
 }
 
 function evidenceExceed() {
-  ElMessage.warning('证据图片最多上传3张')
+  ElMessage.warning(t('evidenceLimit'))
 }
 
 async function submitReport() {
-  if (!reportForm.targetChatNo || !reportForm.description) return ElMessage.warning('请填写被举报用户 Woha ID 和举报说明')
+  if (!reportForm.targetChatNo || !reportForm.description) return ElMessage.warning(t('enterReportedUserAndReason'))
   await submitExternalReport(reportForm)
-  ElMessage.success('举报已提交')
+  ElMessage.success(t('reportSubmitted'))
   Object.assign(reportForm, { targetChatNo: undefined, violationType: '其他违规', description: '', evidenceUrls: [] })
   evidenceFiles.value = []
   loadReportRecords()
 }
 
-const reportStatusName = status => ({ 0: '待处理', 1: '已处理' })[status] || status
+const reportStatusName = status => ({ 0: t('pending'), 1: t('processed') })[status] || status
 const reportStatusType = status => ({ 0: 'warning', 1: 'success' })[status] || 'info'
 
 async function init() {

@@ -1,26 +1,26 @@
 <template>
   <div class="page">
     <el-form :model="query" inline>
-      <el-form-item label="公会ID/名称"><el-input v-model="query.keyword" clearable placeholder="请输入" @keyup.enter="load" /></el-form-item>
-      <el-form-item label="负责人"><el-select v-model="query.responsibleWohaUid" clearable placeholder="请选择"><el-option v-for="item in responsibles" :key="item.wohaUid" :label="responsibleLabel(item)" :value="item.wohaUid" /></el-select></el-form-item>
-      <el-form-item label="创建方式"><el-select v-model="query.createSource" clearable placeholder="请选择"><el-option label="外管创建" :value="0" /><el-option label="入驻申请" :value="1" /></el-select></el-form-item>
-      <el-button type="primary" @click="load">查询</el-button><el-button @click="reset">重置</el-button>
+      <el-form-item :label="`${t('guildId')}/${t('guildName')}`"><el-input v-model="query.keyword" clearable :placeholder="t('enter')" @keyup.enter="load" /></el-form-item>
+      <el-form-item :label="t('responsible')"><el-select v-model="query.responsibleWohaUid" clearable :placeholder="t('select')"><el-option v-for="item in responsibles" :key="item.wohaUid" :label="responsibleLabel(item)" :value="item.wohaUid" /></el-select></el-form-item>
+      <el-form-item :label="t('createMethod')"><el-select v-model="query.createSource" clearable :placeholder="t('select')"><el-option :label="t('operationOpen')" :value="0" /><el-option :label="t('onboardingApplication')" :value="1" /></el-select></el-form-item>
+      <el-button type="primary" @click="load">{{ t('query') }}</el-button><el-button @click="reset">{{ t('reset') }}</el-button>
     </el-form>
-    <div class="toolbar"><h2>公会管理</h2><div><el-button v-if="canExport" @click="exportData">导出</el-button><el-button v-if="canCreate" type="primary" @click="openCreate">新建公会</el-button></div></div>
+    <div class="toolbar"><h2>{{ t('guildManagement') }}</h2><div><el-button v-if="canExport" @click="exportData">{{ t('export') }}</el-button><el-button v-if="canCreate" type="primary" @click="openCreate">{{ t('createGuild') }}</el-button></div></div>
     <el-table :data="rows" v-loading="loading" border>
-      <el-table-column prop="familyName" label="公会" min-width="180"><template #default="{ row }">{{ row.familyName }}（{{ row.familyNo }}）</template></el-table-column>
-      <el-table-column prop="captainChatNo" label="会长ID" min-width="110" />
-      <el-table-column prop="captainNickname" label="会长昵称" min-width="120" />
-      <el-table-column prop="responsibleName" label="负责人" min-width="110" />
-      <el-table-column prop="bdLeaderName" label="所属BD Leader" min-width="130" />
-      <el-table-column prop="anchorCount" label="主播数" width="90" />
-      <el-table-column prop="monthFlow" label="本月流水（金币）" min-width="150"><template #default="{ row }">{{ number(row.monthFlow) }}</template></el-table-column>
-      <el-table-column prop="createMethod" label="创建方式" width="110" />
-      <el-table-column prop="statusName" label="状态" width="100" />
+      <el-table-column prop="familyName" :label="t('agencies')" min-width="180"><template #default="{ row }">{{ row.familyName }}（{{ row.familyNo }}）</template></el-table-column>
+      <el-table-column prop="captainChatNo" :label="t('captainId')" min-width="110" />
+      <el-table-column prop="captainNickname" :label="t('captainNickname')" min-width="120" />
+      <el-table-column prop="responsibleName" :label="t('responsible')" min-width="110" />
+      <el-table-column prop="bdLeaderName" :label="t('bdLeader')" min-width="130" />
+      <el-table-column prop="anchorCount" :label="t('anchorCount')" width="90" />
+      <el-table-column prop="monthFlow" :label="`${t('monthlyFlow')}（${t('coins')}）`" min-width="150"><template #default="{ row }">{{ number(row.monthFlow) }}</template></el-table-column>
+      <el-table-column prop="createMethod" :label="t('createMethod')" width="110" />
+      <el-table-column prop="statusName" :label="t('status')" width="100" />
     </el-table>
     <pagination v-show="total > 0" v-model:page="query.pageNum" v-model:limit="query.pageSize" :total="total" @pagination="load" />
 
-    <el-drawer v-model="visible" title="新建公会" size="500px" destroy-on-close>
+    <el-drawer v-model="visible" :title="t('createGuild')" size="500px" destroy-on-close>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="115px">
         <el-form-item label="会长 Woha ID" prop="captainChatNo"><el-input v-model.number="form.captainChatNo" @blur="loadCaptainPreview" /></el-form-item>
         <el-form-item v-if="captainPreview" label="会长昵称"><span>{{ captainPreviewText }}</span></el-form-item>
@@ -38,8 +38,10 @@
 import { ElMessage } from 'element-plus'
 import { getExternalToken } from '@/utils/externalAuth'
 import { createExternalGuild, getExternalGuildCaptainPreview, getExternalProfile, listExternalGuild, listExternalGuildResponsibles } from '@/api/external/manager'
+import { useExternalI18n } from '@/i18n/external'
 
 const { proxy } = getCurrentInstance()
+const { locale, t } = useExternalI18n()
 const rows = ref([]), total = ref(0), loading = ref(false), visible = ref(false), submitting = ref(false), formRef = ref()
 const responsibles = ref([])
 const captainPreview = ref(null)
@@ -51,7 +53,7 @@ const uploadUrl = `${import.meta.env.VITE_APP_BASE_API}/upload/img.action`
 const uploadHeaders = computed(() => ({ 'X-External-Token': getExternalToken() }))
 const canCreate = computed(() => String(profile.value.permissions || '').split(',').includes('CREATE_GUILD'))
 const canExport = computed(() => String(profile.value.permissions || '').split(',').includes('EXPORT_GUILD_FLOW'))
-const number = value => Number(value || 0).toLocaleString()
+const number = value => Number(value || 0).toLocaleString(locale.value)
 const responsibleLabel = item => `${item.realName || item.loginName}（${item.wohaChatNo || item.wohaUid}）`
 const captainPreviewText = computed(() => {
   if (!captainPreview.value.registered) return '未注册'
