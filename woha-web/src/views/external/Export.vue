@@ -23,13 +23,14 @@
 
     <section class="record-panel">
       <h2>{{ t('exportRecords') }}</h2>
-      <el-table :data="records" border size="small" :empty-text="t('noExportRecords')">
+      <el-table :data="pagedRecords" border size="small" :empty-text="t('noExportRecords')">
         <el-table-column prop="time" :label="t('time')" min-width="155" />
         <el-table-column :label="t('dataset')" min-width="120"><template #default="{ row }">{{ recordDatasetName(row) }}</template></el-table-column>
         <el-table-column prop="fieldCount" :label="t('fieldCount')" width="90" align="center" />
         <el-table-column prop="operator" :label="t('operator')" min-width="110" />
         <el-table-column :label="t('download')" width="100" align="center"><template #default="{ row }"><el-button link type="primary" @click="downloadRecord(row)">{{ t('download') }}</el-button></template></el-table-column>
       </el-table>
+      <pagination v-show="records.length > 0" v-model:page="recordPageNum" v-model:limit="recordPageSize" :total="records.length" />
       <p class="record-tip">{{ t('exportRecordTip') }}</p>
     </section>
   </div>
@@ -49,6 +50,8 @@ const profile = ref({})
 const selectedCode = ref('')
 const selectedFields = ref([])
 const records = ref([])
+const recordPageNum = ref(1)
+const recordPageSize = ref(10)
 const datasetDefinitions = [
   { code: 'GUILD_LIST', permission: 'EXPORT_GUILD_LIST', nameKey: 'guildList', path: 'external/guild/list/export', fields: [{ code: 'familyName', nameKey: 'guildName' }, { code: 'familyNo', nameKey: 'guildId' }, { code: 'captainChatNo', nameKey: 'captainId' }, { code: 'captainNickname', nameKey: 'captainNickname' }, { code: 'responsibleName', nameKey: 'responsible' }, { code: 'bdLeaderName', nameKey: 'bdLeader' }, { code: 'anchorCount', nameKey: 'anchorCount' }, { code: 'monthFlow', nameKey: 'monthlyFlow' }, { code: 'createMethod', nameKey: 'createMethod' }, { code: 'statusName', nameKey: 'status' }, { code: 'createTime', nameKey: 'createTime' }] },
   { code: 'GUILD_FLOW', permission: 'EXPORT_GUILD_FLOW', nameKey: 'guildFlow', path: 'external/guild/export', fields: [{ code: 'familyName', nameKey: 'guildName' }, { code: 'familyNo', nameKey: 'guildId' }, { code: 'responsibleName', nameKey: 'responsible' }, { code: 'bdLeaderName', nameKey: 'bdLeader' }, { code: 'rangeFlow', nameKey: 'rangeFlow' }, { code: 'weekFlow', nameKey: 'weeklyFlow' }, { code: 'monthFlow', nameKey: 'monthlyFlow' }, { code: 'totalFlow', nameKey: 'totalFlow' }, { code: 'createTime', nameKey: 'createTime' }] },
@@ -60,6 +63,10 @@ const datasets = computed(() => {
   return datasetDefinitions.filter(item => permissions.includes(item.permission))
 })
 const currentDataset = computed(() => datasets.value.find(item => item.code === selectedCode.value) || { fields: [] })
+const pagedRecords = computed(() => {
+  const start = (recordPageNum.value - 1) * recordPageSize.value
+  return records.value.slice(start, start + recordPageSize.value)
+})
 const datasetName = dataset => t(dataset.nameKey)
 const fieldName = field => t(field.nameKey)
 const recordDatasetName = record => datasetName(datasetDefinitions.find(item => item.code === record.code) || { nameKey: 'dataset' })
@@ -72,11 +79,13 @@ function loadRecords() {
   const now = Date.now()
   const saved = JSON.parse(localStorage.getItem(storageKey) || '[]')
   records.value = saved.filter(item => now - item.timestamp < 7 * 24 * 60 * 60 * 1000)
+  recordPageNum.value = 1
   localStorage.setItem(storageKey, JSON.stringify(records.value))
 }
 
 function saveRecord(dataset, params) {
   records.value.unshift({ id: `${Date.now()}-${dataset.code}`, timestamp: Date.now(), time: new Date().toLocaleString(locale.value, { hour12: false }), datasetName: datasetName(dataset), fieldCount: params.fieldCodes.split(',').length, operator: profile.value.realName || profile.value.loginName, code: dataset.code, params })
+  recordPageNum.value = 1
   localStorage.setItem(storageKey, JSON.stringify(records.value))
 }
 

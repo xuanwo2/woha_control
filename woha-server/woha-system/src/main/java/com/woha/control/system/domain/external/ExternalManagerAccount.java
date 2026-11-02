@@ -62,6 +62,8 @@ public class ExternalManagerAccount
     private Date updateTime;
     /** 创建者 */
     private String createBy;
+    /** 创建人名称 */
+    private String creatorName;
     /** 更新者 */
     private String updateBy;
     /** Woha 展示账号 */

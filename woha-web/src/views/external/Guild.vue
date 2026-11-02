@@ -3,7 +3,7 @@
     <el-form :model="query" inline>
       <el-form-item :label="`${t('guildId')}/${t('guildName')}`"><el-input v-model="query.keyword" clearable :placeholder="t('enter')" @keyup.enter="load" /></el-form-item>
       <el-form-item :label="t('responsible')"><el-select v-model="query.responsibleWohaUid" clearable :placeholder="t('select')"><el-option v-for="item in responsibles" :key="item.wohaUid" :label="responsibleLabel(item)" :value="item.wohaUid" /></el-select></el-form-item>
-      <el-form-item :label="t('createMethod')"><el-select v-model="query.createSource" clearable :placeholder="t('select')"><el-option :label="t('operationOpen')" :value="0" /><el-option :label="t('onboardingApplication')" :value="1" /></el-select></el-form-item>
+      <el-form-item :label="t('createMethod')"><el-select v-model="query.createSource" clearable :placeholder="t('select')"><el-option :label="t('externalGuildCreate')" :value="0" /><el-option :label="t('onboardingApplication')" :value="1" /><el-option :label="t('operationGuildCreate')" :value="2" /></el-select></el-form-item>
       <el-button type="primary" @click="load">{{ t('query') }}</el-button><el-button @click="reset">{{ t('reset') }}</el-button>
     </el-form>
     <div class="toolbar"><h2>{{ t('guildManagement') }}</h2><div><el-button v-if="canExport" @click="exportData">{{ t('export') }}</el-button><el-button v-if="canCreate" type="primary" @click="openCreate">{{ t('createGuild') }}</el-button></div></div>

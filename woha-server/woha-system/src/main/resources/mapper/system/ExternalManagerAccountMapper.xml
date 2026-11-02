@@ -25,13 +25,15 @@
         <result property="pwdUpdateDate" column="pwd_update_date"/>
         <result property="createTime" column="create_time"/>
         <result property="updateTime" column="update_time"/>
+        <result property="creatorName" column="creator_name"/>
     </resultMap>
 
-    <sql id="selectAccountColumns">a.id, a.login_name, a.password, a.real_name, a.woha_uid, a.role_code, a.parent_id, a.region_id, a.permissions, a.open_method, a.whatsapp, a.remark, a.status, a.del_flag, a.login_fail_count, a.login_fail_time, a.lock_expire_time, a.login_ip, a.login_date, a.pwd_update_date, a.create_time, a.update_time, p.login_name as parent_login_name</sql>
+    <sql id="selectAccountColumns">a.id, a.login_name, a.password, a.real_name, a.woha_uid, a.role_code, a.parent_id, a.region_id, a.permissions, a.open_method, a.whatsapp, a.remark, a.status, a.del_flag, a.login_fail_count, a.login_fail_time, a.lock_expire_time, a.login_ip, a.login_date, a.pwd_update_date, a.create_time, a.update_time, p.login_name as parent_login_name, coalesce(creator.real_name, a.create_by) as creator_name</sql>
 
     <select id="selectAccountList" resultMap="ExternalManagerAccountResult">
         select <include refid="selectAccountColumns"/> from external_manager_account a
         left join external_manager_account p on p.id = a.parent_id and p.del_flag = '0'
+        left join external_manager_account creator on creator.login_name = a.create_by and creator.del_flag = '0'
         where a.del_flag = '0'
         <if test="loginName != null and loginName != ''">and a.login_name like concat('%', #{loginName}, '%')</if>
         <if test="wohaUid != null">and a.woha_uid = #{wohaUid}</if>
@@ -46,12 +48,14 @@
     <select id="selectAccountSummariesByRegion" resultMap="ExternalManagerAccountResult">
         select <include refid="selectAccountColumns"/> from external_manager_account a
         left join external_manager_account p on p.id = a.parent_id and p.del_flag = '0'
+        left join external_manager_account creator on creator.login_name = a.create_by and creator.del_flag = '0'
         where a.region_id = #{regionId} and a.del_flag = '0'
     </select>
 
     <select id="selectTeamAccountList" resultMap="ExternalManagerAccountResult">
         select <include refid="selectAccountColumns"/> from external_manager_account a
         left join external_manager_account p on p.id = a.parent_id and p.del_flag = '0'
+        left join external_manager_account creator on creator.login_name = a.create_by and creator.del_flag = '0'
         where a.del_flag = '0' and a.id in
         <foreach collection="ids" item="id" open="(" separator="," close=")">#{id}</foreach>
         <if test="loginName != null and loginName != ''">and a.login_name like concat('%', #{loginName}, '%')</if>
@@ -68,9 +72,9 @@
         group by parent_id
     </select>
 
-    <select id="selectAccountById" resultMap="ExternalManagerAccountResult">select <include refid="selectAccountColumns"/> from external_manager_account a left join external_manager_account p on p.id = a.parent_id and p.del_flag = '0' where a.id = #{id} and a.del_flag = '0'</select>
-    <select id="selectAccountByLoginName" resultMap="ExternalManagerAccountResult">select <include refid="selectAccountColumns"/> from external_manager_account a left join external_manager_account p on p.id = a.parent_id and p.del_flag = '0' where a.login_name = #{loginName} and a.del_flag = '0'</select>
-    <select id="selectAccountByLoginNameForUpdate" resultMap="ExternalManagerAccountResult">select <include refid="selectAccountColumns"/> from external_manager_account a left join external_manager_account p on p.id = a.parent_id and p.del_flag = '0' where a.login_name = #{loginName} and a.del_flag = '0' for update</select>
+    <select id="selectAccountById" resultMap="ExternalManagerAccountResult">select <include refid="selectAccountColumns"/> from external_manager_account a left join external_manager_account p on p.id = a.parent_id and p.del_flag = '0' left join external_manager_account creator on creator.login_name = a.create_by and creator.del_flag = '0' where a.id = #{id} and a.del_flag = '0'</select>
+    <select id="selectAccountByLoginName" resultMap="ExternalManagerAccountResult">select <include refid="selectAccountColumns"/> from external_manager_account a left join external_manager_account p on p.id = a.parent_id and p.del_flag = '0' left join external_manager_account creator on creator.login_name = a.create_by and creator.del_flag = '0' where a.login_name = #{loginName} and a.del_flag = '0'</select>
+    <select id="selectAccountByLoginNameForUpdate" resultMap="ExternalManagerAccountResult">select <include refid="selectAccountColumns"/> from external_manager_account a left join external_manager_account p on p.id = a.parent_id and p.del_flag = '0' left join external_manager_account creator on creator.login_name = a.create_by and creator.del_flag = '0' where a.login_name = #{loginName} and a.del_flag = '0' for update</select>
 
     <insert id="insertAccount" useGeneratedKeys="true" keyProperty="id">
         insert into external_manager_account (login_name, password, real_name, woha_uid, role_code, parent_id, region_id, permissions, open_method, whatsapp, remark, pwd_update_date, create_by)
