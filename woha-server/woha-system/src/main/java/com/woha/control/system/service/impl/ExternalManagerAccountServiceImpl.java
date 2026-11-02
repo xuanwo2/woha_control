@@ -84,6 +84,14 @@ public class ExternalManagerAccountServiceImpl implements IExternalManagerAccoun
         return account;
     }
 
+    /** 校验外管账号是否存在且处于正常状态 */
+    @Override
+    public boolean isAccountEnabled(Long id)
+    {
+        ExternalManagerAccount account = accountMapper.selectAccountById(id);
+        return account != null && "0".equals(account.getStatus()) && "0".equals(account.getDelFlag());
+    }
+
     /** 新增外管账号 */
     @Override
     @Transactional(rollbackFor = Exception.class)

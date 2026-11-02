@@ -20,6 +20,9 @@ public interface IExternalManagerAccountService
     /** 查询外管账号详情 */
     ExternalManagerAccount selectAccountById(Long id);
 
+    /** 校验外管账号是否存在且处于正常状态 */
+    boolean isAccountEnabled(Long id);
+
     /** 新增外管账号 */
     void createAccount(ExternalManagerSaveRequest request, String operator, String openMethod);
 
