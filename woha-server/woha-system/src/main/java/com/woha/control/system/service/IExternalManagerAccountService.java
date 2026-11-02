@@ -26,6 +26,9 @@ public interface IExternalManagerAccountService
     /** 新增外管账号 */
     void createAccount(ExternalManagerSaveRequest request, String operator, String openMethod);
 
+    /** 补齐外管账号的旧 BD 体系关联 */
+    void ensureBdRelation(Long accountId);
+
     /** 新增下级并返回初始密码 */
     String createSubordinate(ExternalManagerAccount parent, ExternalSubordinateCreateRequest request);
 

@@ -464,14 +464,11 @@ public class ExternalManagerController extends BaseController
     @PutMapping("/auth/password")
     public AjaxResult changePassword(@Valid @RequestBody ExternalPasswordChangeRequest request, HttpServletRequest httpRequest)
     {
-        List<ExternalManagerAccount> accounts = accountService.selectAccountList(currentLoginName(), null, null, null, null, null, null);
-        if (accounts.isEmpty())
-        {
-            throw new ServiceException("外管账号不存在");
-        }
-        accountService.changePassword(accounts.get(0).getId(), request.getOldPassword(), request.getNewPassword());
-        externalTokenService.invalidateAccountTokens(accounts.get(0).getId());
-        operationLogService.record(accounts.get(0), "CHANGE_PASSWORD", "自身账号", "修改密码");
+        ExternalManagerAccount account = accountService.selectAccountById(currentAccountId());
+        accountService.changePassword(account.getId(), request.getOldPassword(), request.getNewPassword());
+        externalTokenService.invalidateOtherAccountTokens(account.getId(),
+                httpRequest.getHeader(ExternalAuthenticationTokenFilter.TOKEN_HEADER));
+        operationLogService.record(account, "CHANGE_PASSWORD", "自身账号", "修改密码");
         return AjaxResult.success();
     }
 

@@ -63,6 +63,22 @@ public class ExternalTokenService
         redisCache.deleteObject(ACCOUNT_TOKEN_KEY_PREFIX + accountId);
     }
 
+    /** 清除账号除当前会话外的登录令牌 */
+    public void invalidateOtherAccountTokens(Long accountId, String currentToken)
+    {
+        Set<String> tokens = redisCache.getCacheSet(ACCOUNT_TOKEN_KEY_PREFIX + accountId);
+        if (tokens != null)
+        {
+            for (String token : tokens)
+            {
+                if (!token.equals(currentToken))
+                {
+                    redisCache.deleteObject(TOKEN_KEY_PREFIX + token);
+                }
+            }
+        }
+    }
+
     /** 停用账号并使其全部登录令牌立即失效 */
     public void disableAccountTokens(Long accountId)
     {

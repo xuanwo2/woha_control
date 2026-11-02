@@ -20,6 +20,7 @@ import com.woha.control.system.domain.external.ExternalWohaUser;
 import com.woha.control.system.mapper.ExternalGuildMapper;
 import com.woha.control.system.mapper.ExternalBdRelationMapper;
 import com.woha.control.system.service.IExternalGuildService;
+import com.woha.control.system.service.IExternalManagerAccountService;
 
 /**
  * 外管公会服务实现
@@ -34,14 +35,17 @@ public class ExternalGuildServiceImpl implements IExternalGuildService
 
     private final ExternalGuildMapper guildMapper;
     private final ExternalBdRelationMapper bdRelationMapper;
+    private final IExternalManagerAccountService accountService;
 
     @Value("${spring.datasource.druid.slave.enabled:false}")
     private boolean slaveEnabled;
 
-    public ExternalGuildServiceImpl(ExternalGuildMapper guildMapper, ExternalBdRelationMapper bdRelationMapper)
+    public ExternalGuildServiceImpl(ExternalGuildMapper guildMapper, ExternalBdRelationMapper bdRelationMapper,
+            IExternalManagerAccountService accountService)
     {
         this.guildMapper = guildMapper;
         this.bdRelationMapper = bdRelationMapper;
+        this.accountService = accountService;
     }
 
     /** 查询新建公会会长预览信息 */
@@ -99,6 +103,7 @@ public class ExternalGuildServiceImpl implements IExternalGuildService
         {
             throw new ServiceException("生成公会号异常");
         }
+        accountService.ensureBdRelation(responsible.getId());
         Long responsibleBdUserId = bdRelationMapper.selectBdUserIdByUid(responsible.getWohaUid());
         if (responsibleBdUserId == null)
         {

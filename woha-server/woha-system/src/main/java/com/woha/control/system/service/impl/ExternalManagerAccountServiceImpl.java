@@ -112,6 +112,13 @@ public class ExternalManagerAccountServiceImpl implements IExternalManagerAccoun
         saveGiftQuotas(account.getId(), request.getRegionId(), request.getGiftQuotas());
     }
 
+    /** 补齐外管账号的旧 BD 体系关联 */
+    @Override
+    public void ensureBdRelation(Long accountId)
+    {
+        ensureBdRelation(selectAccountById(accountId));
+    }
+
     /** 创建当前外管账号的下级并返回初始密码 */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -159,13 +166,18 @@ public class ExternalManagerAccountServiceImpl implements IExternalManagerAccoun
         }
     }
 
-    /** 为 BD Leader、BD 外管账号补齐旧 BD 体系关系。 */
+    /** 为 Super Admin、BD Leader、BD 外管账号补齐旧 BD 体系关系。 */
     private void ensureBdRelation(ExternalManagerAccount account)
     {
         if (ExternalManagerRole.BD_LEADER.name().equals(account.getRoleCode()))
         {
             Integer bdLeaderId = ensureBdLeader(account);
             ensureBdUser(account, bdLeaderId, 0);
+            return;
+        }
+        if (ExternalManagerRole.SUPER_ADMIN.name().equals(account.getRoleCode()))
+        {
+            ensureBdUser(account, null, 0);
             return;
         }
         if (!ExternalManagerRole.BD.name().equals(account.getRoleCode()))
