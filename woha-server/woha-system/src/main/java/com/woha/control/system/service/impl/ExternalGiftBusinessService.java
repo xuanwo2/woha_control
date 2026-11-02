@@ -110,10 +110,11 @@ public class ExternalGiftBusinessService
         }
     }
 
-    /** 生成长度固定的VIP记录订单号，适配原业务表的32位字段限制。 */
+    /** 生成数值型 VIP 记录订单号，适配原业务库 order_id 字段。 */
     private String createVipOrderId(String requestNo, Integer sortNo)
     {
-        return UUID.nameUUIDFromBytes((requestNo + ":" + sortNo).getBytes(StandardCharsets.UTF_8))
-                .toString().replace("-", "");
+        long orderId = UUID.nameUUIDFromBytes((requestNo + ":" + sortNo).getBytes(StandardCharsets.UTF_8))
+                .getMostSignificantBits() & Long.MAX_VALUE;
+        return Long.toString(orderId);
     }
 }

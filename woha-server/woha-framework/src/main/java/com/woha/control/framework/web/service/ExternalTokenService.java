@@ -19,6 +19,8 @@ public class ExternalTokenService
     private static final int EXPIRE_DAYS = 7;
     private static final String TOKEN_KEY_PREFIX = "external:login:token:";
     private static final String ACCOUNT_TOKEN_KEY_PREFIX = "external:login:account:";
+    /** 外管停用账号标记前缀 */
+    private static final String DISABLED_ACCOUNT_KEY_PREFIX = "external:login:disabled:";
     private final RedisCache redisCache;
 
     public ExternalTokenService(RedisCache redisCache)
@@ -39,7 +41,12 @@ public class ExternalTokenService
     /** 获取外管登录会话 */
     public ExternalLoginUser getLoginUser(String token)
     {
-        return redisCache.getCacheObject(TOKEN_KEY_PREFIX + token);
+        ExternalLoginUser loginUser = redisCache.getCacheObject(TOKEN_KEY_PREFIX + token);
+        if (loginUser == null || Boolean.TRUE.equals(redisCache.hasKey(DISABLED_ACCOUNT_KEY_PREFIX + loginUser.getAccountId())))
+        {
+            return null;
+        }
+        return loginUser;
     }
 
     /** 清除账号所有登录令牌 */
@@ -54,6 +61,19 @@ public class ExternalTokenService
             }
         }
         redisCache.deleteObject(ACCOUNT_TOKEN_KEY_PREFIX + accountId);
+    }
+
+    /** 停用账号并使其全部登录令牌立即失效 */
+    public void disableAccountTokens(Long accountId)
+    {
+        invalidateAccountTokens(accountId);
+        redisCache.setCacheObject(DISABLED_ACCOUNT_KEY_PREFIX + accountId, Boolean.TRUE);
+    }
+
+    /** 启用账号并解除登录令牌停用标记 */
+    public void enableAccountTokens(Long accountId)
+    {
+        redisCache.deleteObject(DISABLED_ACCOUNT_KEY_PREFIX + accountId);
     }
 
     /** 清除单个登录令牌 */

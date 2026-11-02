@@ -61,15 +61,14 @@
             from fm_family_user where anchor_status = 1 group by family_id
         ) anchor_stat on anchor_stat.family_id = f.family_id
         left join (
-            select buf.family_id,
+            select day_stat.family_id,
                    coalesce(sum(case when day_stat.count_day between #{startDate} and #{endDate} then day_stat.gold_num + day_stat.luck_gold_num else 0 end), 0) as range_flow,
                    coalesce(sum(case when day_stat.count_day between #{weekStartDate} and #{endDate} then day_stat.gold_num + day_stat.luck_gold_num else 0 end), 0) as week_flow,
                    coalesce(sum(case when day_stat.count_day between #{monthStartDate} and #{endDate} then day_stat.gold_num + day_stat.luck_gold_num else 0 end), 0) as month_flow,
                    coalesce(sum(day_stat.gold_num + day_stat.luck_gold_num), 0) as total_flow
-            from bd_user_family_day day_stat
-            join bd_user_family buf on buf.id = day_stat.bd_user_family_id
+            from fm_anchor_day day_stat
             where day_stat.count_day &lt;= #{endDate}
-            group by buf.family_id
+            group by day_stat.family_id
         ) flow on flow.family_id = f.family_id
     </sql>
 

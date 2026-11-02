@@ -563,7 +563,11 @@ public class ExternalManagerController extends BaseController
         accountService.updateAccountStatus(id, status);
         if ("1".equals(status))
         {
-            externalTokenService.invalidateAccountTokens(id);
+            externalTokenService.disableAccountTokens(id);
+        }
+        else
+        {
+            externalTokenService.enableAccountTokens(id);
         }
         return AjaxResult.success();
     }
