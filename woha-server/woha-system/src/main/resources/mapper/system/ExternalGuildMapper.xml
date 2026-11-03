@@ -58,6 +58,8 @@
                 <otherwise>and f.create_source = #{createSource}</otherwise>
             </choose>
         </if>
+        <if test="createStartDate != null">and f.create_time &gt;= #{createStartDate}</if>
+        <if test="createEndDate != null">and f.create_time &lt; date_add(#{createEndDate}, interval 1 day)</if>
     </sql>
 
     <sql id="guildJoin">

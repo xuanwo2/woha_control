@@ -27,6 +27,10 @@ public class ExternalGuildQuery
     /** 统计结束日期 */
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate endDate;
+    /** 公会创建开始日期，仅用于导出筛选。 */
+    private LocalDate createStartDate;
+    /** 公会创建结束日期，仅用于导出筛选。 */
+    private LocalDate createEndDate;
     /** 所选结束日所属周的开始日期 */
     private LocalDate weekStartDate;
     /** 所选结束日所属月的开始日期 */
