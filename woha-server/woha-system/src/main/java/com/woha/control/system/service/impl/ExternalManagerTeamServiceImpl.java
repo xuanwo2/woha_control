@@ -1,5 +1,6 @@
 package com.woha.control.system.service.impl;
 
+import java.time.LocalDate;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -49,7 +50,12 @@ public class ExternalManagerTeamServiceImpl implements IExternalManagerTeamServi
     @Override
     @DataSource(DataSourceType.SLAVE)
     public List<ExternalManagerAccount> selectTeamMembers(List<Long> ids, String loginName, String roleCode, String status)
-    { return ids.isEmpty() ? List.of() : accountMapper.selectTeamAccountList(ids, loginName, roleCode, status); }
+    { return ids.isEmpty() ? List.of() : accountMapper.selectTeamAccountList(ids, loginName, roleCode, status, null, null); }
+
+    @Override
+    @DataSource(DataSourceType.SLAVE)
+    public List<ExternalManagerAccount> selectTeamMembers(List<Long> ids, LocalDate startDate, LocalDate endDate)
+    { return ids.isEmpty() ? List.of() : accountMapper.selectTeamAccountList(ids, null, null, null, startDate, endDate); }
 
     @Override
     @DataSource(DataSourceType.SLAVE)

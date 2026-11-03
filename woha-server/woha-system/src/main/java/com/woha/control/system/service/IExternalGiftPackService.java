@@ -1,5 +1,6 @@
 package com.woha.control.system.service;
 
+import java.time.LocalDate;
 import java.util.List;
 import com.woha.control.system.domain.external.ExternalGiftPack;
 import com.woha.control.system.domain.external.ExternalGiftPackIssue;
@@ -27,4 +28,6 @@ public interface IExternalGiftPackService
     void issueGiftPack(ExternalManagerAccount account, ExternalGiftPackIssueRequest request);
     /** 查询发放记录 */
     List<ExternalGiftPackIssue> selectIssueList(Long accountId);
+    /** 按发放日期查询发放记录。 */
+    List<ExternalGiftPackIssue> selectIssueList(Long accountId, LocalDate startDate, LocalDate endDate);
 }

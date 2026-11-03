@@ -1,6 +1,7 @@
 package com.woha.control.system.service.impl;
 
 import java.util.ArrayList;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -163,7 +164,13 @@ public class ExternalGiftPackServiceImpl implements IExternalGiftPackService
     @Override
     public List<ExternalGiftPackIssue> selectIssueList(Long accountId)
     {
-        return giftPackMapper.selectIssueList(accountId);
+        return selectIssueList(accountId, null, null);
+    }
+
+    @Override
+    public List<ExternalGiftPackIssue> selectIssueList(Long accountId, LocalDate startDate, LocalDate endDate)
+    {
+        return giftPackMapper.selectIssueList(accountId, startDate, endDate);
     }
 
     /** 校验礼包配置 */

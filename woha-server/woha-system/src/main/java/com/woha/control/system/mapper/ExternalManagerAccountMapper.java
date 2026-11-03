@@ -1,6 +1,7 @@
 package com.woha.control.system.mapper;
 
 import java.util.List;
+import java.time.LocalDate;
 import java.util.Collection;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -25,7 +26,8 @@ public interface ExternalManagerAccountMapper
 
     /** 按可见账号范围查询团队成员 */
     List<ExternalManagerAccount> selectTeamAccountList(@Param("ids") Collection<Long> ids,
-            @Param("loginName") String loginName, @Param("roleCode") String roleCode, @Param("status") String status);
+            @Param("loginName") String loginName, @Param("roleCode") String roleCode, @Param("status") String status,
+            @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
     /** 批量查询账号直属下级数量 */
     List<ExternalManagerAccount> selectDirectSubordinateCounts(@Param("parentIds") Collection<Long> parentIds);

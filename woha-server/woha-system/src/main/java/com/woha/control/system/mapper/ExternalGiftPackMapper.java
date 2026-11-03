@@ -1,5 +1,6 @@
 package com.woha.control.system.mapper;
 
+import java.time.LocalDate;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -45,6 +46,7 @@ public interface ExternalGiftPackMapper
             @Param("accountId") Long accountId, @Param("receiverUid") Long receiverUid,
             @Param("regionId") Integer regionId, @Param("grantNo") Integer grantNo,
             @Param("contentSnapshot") String contentSnapshot);
-    /** 查询发放记录 */
-    List<ExternalGiftPackIssue> selectIssueList(@Param("accountId") Long accountId);
+    /** 按发放日期查询发放记录。 */
+    List<ExternalGiftPackIssue> selectIssueList(@Param("accountId") Long accountId,
+            @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 }

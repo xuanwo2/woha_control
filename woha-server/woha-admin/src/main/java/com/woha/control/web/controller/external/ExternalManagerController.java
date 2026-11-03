@@ -2,6 +2,7 @@ package com.woha.control.web.controller.external;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -441,16 +442,22 @@ public class ExternalManagerController extends BaseController
 
     /** 导出当前外管可见团队成员。 */
     @PostMapping("/team/members/export")
-    public void exportTeamMembers(HttpServletResponse response, @RequestParam(required = false) String fieldCodes)
+    public void exportTeamMembers(HttpServletResponse response, @RequestParam(required = false) String fieldCodes,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate)
     {
-        ExternalManagerAccount current=accountService.selectAccountById(currentAccountId()); requirePermission(current, ExternalManagerPermission.EXPORT_TEAM_MEMBER); List<ExternalManagerAccount> list=teamService.selectTeamMembers(teamService.resolveVisibleAccountIds(current),null,null,null); enrichWohaUsers(list); ExcelUtil<ExternalManagerAccount> excelUtil = new ExcelUtil<>(ExternalManagerAccount.class); excelUtil.showColumn(selectExportFields(fieldCodes, "loginName", "realName", "wohaUid", "roleCode", "parentLoginName")); excelUtil.exportExcel(response,list,"团队成员"); operationLogService.record(current,"EXPORT_TEAM_MEMBER","团队成员","导出"+list.size()+"条");
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) { throw new ServiceException("开始日期不能晚于结束日期"); }
+        ExternalManagerAccount current=accountService.selectAccountById(currentAccountId()); requirePermission(current, ExternalManagerPermission.EXPORT_TEAM_MEMBER); List<ExternalManagerAccount> list=teamService.selectTeamMembers(teamService.resolveVisibleAccountIds(current),startDate,endDate); enrichWohaUsers(list); ExcelUtil<ExternalManagerAccount> excelUtil = new ExcelUtil<>(ExternalManagerAccount.class); excelUtil.showColumn(selectExportFields(fieldCodes, "loginName", "realName", "wohaUid", "roleCode", "parentLoginName")); excelUtil.exportExcel(response,list,"团队成员"); operationLogService.record(current,"EXPORT_TEAM_MEMBER","团队成员","导出"+list.size()+"条");
     }
 
     /** 导出当前外管礼包赠送记录。 */
     @PostMapping("/gift-packs/issues/export")
-    public void exportGiftIssues(HttpServletResponse response, @RequestParam(required = false) String fieldCodes)
+    public void exportGiftIssues(HttpServletResponse response, @RequestParam(required = false) String fieldCodes,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate)
     {
-        ExternalManagerAccount current=accountService.selectAccountById(currentAccountId()); requirePermission(current, ExternalManagerPermission.EXPORT_GIFT_ISSUE); List<com.woha.control.system.domain.external.ExternalGiftPackIssue> list=giftPackService.selectIssueList(current.getId()); ExcelUtil<com.woha.control.system.domain.external.ExternalGiftPackIssue> excelUtil = new ExcelUtil<>(com.woha.control.system.domain.external.ExternalGiftPackIssue.class); excelUtil.showColumn(selectExportFields(fieldCodes, "giftName", "receiverUid", "loginName", "contentSnapshot", "status", "createTime")); excelUtil.exportExcel(response,list,"礼包赠送记录"); operationLogService.record(current,"EXPORT_GIFT_ISSUE","礼包赠送记录","导出"+list.size()+"条");
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) { throw new ServiceException("开始日期不能晚于结束日期"); }
+        ExternalManagerAccount current=accountService.selectAccountById(currentAccountId()); requirePermission(current, ExternalManagerPermission.EXPORT_GIFT_ISSUE); List<com.woha.control.system.domain.external.ExternalGiftPackIssue> list=giftPackService.selectIssueList(current.getId(), startDate, endDate); ExcelUtil<com.woha.control.system.domain.external.ExternalGiftPackIssue> excelUtil = new ExcelUtil<>(com.woha.control.system.domain.external.ExternalGiftPackIssue.class); excelUtil.showColumn(selectExportFields(fieldCodes, "giftName", "receiverUid", "loginName", "contentSnapshot", "status", "createTime")); excelUtil.exportExcel(response,list,"礼包赠送记录"); operationLogService.record(current,"EXPORT_GIFT_ISSUE","礼包赠送记录","导出"+list.size()+"条");
     }
 
     /** 导出当前外管新增下级账号记录。 */
